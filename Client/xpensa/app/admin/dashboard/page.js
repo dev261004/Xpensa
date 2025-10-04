@@ -58,7 +58,7 @@ const AdminDashboard = () => {
         return;
       }
 
-      alert("✅ User created successfully & credentials sent via email!");
+      alert("User created successfully & credentials sent via email!");
       fetchUsers(); // refresh user list
       setShowUserModal(false);
     } catch (error) {
@@ -68,7 +68,7 @@ const AdminDashboard = () => {
 
   // 🔹 Delete User (only frontend right now)
   const handleDeleteUser = async (id) => {
-    if (confirm("Are you sure you want to delete this user?")) {
+    if (true) {
       setUsers(users.filter((u) => u._id !== id));
     }
   };
@@ -79,8 +79,7 @@ const AdminDashboard = () => {
       <aside
         className={`${
           sidebarOpen ? "w-64" : "w-0"
-        } bg-gradient-to-b from-indigo-600 to-indigo-800 text-white transition-all duration-300 overflow-hidden`}
-      >
+        } bg-gradient-to-b from-indigo-600 to-indigo-800 text-white transition-all duration-300 overflow-hidden`}>
         <div className="p-6">
           <h1 className="text-2xl font-bold mb-8">Admin Panel</h1>
           <nav className="space-y-2">
@@ -88,8 +87,7 @@ const AdminDashboard = () => {
               onClick={() => setActiveTab("users")}
               className={`flex items-center space-x-3 w-full p-3 rounded-lg transition-colors ${
                 activeTab === "users" ? "bg-white/20" : "hover:bg-white/10"
-              }`}
-            >
+              }`}>
               <Users size={20} />
               <span>User Management</span>
             </button>
@@ -97,8 +95,7 @@ const AdminDashboard = () => {
               onClick={() => setActiveTab("approvals")}
               className={`flex items-center space-x-3 w-full p-3 rounded-lg transition-colors ${
                 activeTab === "approvals" ? "bg-white/20" : "hover:bg-white/10"
-              }`}
-            >
+              }`}>
               <FileText size={20} />
               <span>Approval Rules</span>
             </button>
@@ -106,8 +103,7 @@ const AdminDashboard = () => {
               onClick={() => setActiveTab("settings")}
               className={`flex items-center space-x-3 w-full p-3 rounded-lg transition-colors ${
                 activeTab === "settings" ? "bg-white/20" : "hover:bg-white/10"
-              }`}
-            >
+              }`}>
               <Settings size={20} />
               <span>Settings</span>
             </button>
@@ -123,8 +119,7 @@ const AdminDashboard = () => {
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
                 {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
               </button>
               <h2 className="text-2xl font-semibold text-gray-800">
@@ -151,8 +146,7 @@ const AdminDashboard = () => {
                     setEditingUser(null);
                     setShowUserModal(true);
                   }}
-                  className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
-                >
+                  className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
                   <Plus size={20} />
                   <span>New User</span>
                 </button>
@@ -183,8 +177,7 @@ const AdminDashboard = () => {
                     {users.map((user) => (
                       <tr
                         key={user._id}
-                        className="hover:bg-gray-50 transition-colors"
-                      >
+                        className="hover:bg-gray-50 transition-colors">
                         <td className="px-6 py-4 text-sm text-gray-900">
                           {user.name}
                         </td>
@@ -194,14 +187,13 @@ const AdminDashboard = () => {
                               user.role === "Manager"
                                 ? "bg-purple-100 text-purple-700"
                                 : "bg-blue-100 text-blue-700"
-                            }`}
-                          >
+                            }`}>
                             {user.role}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
-  {user.manager ? user.manager : "-"}
-</td>
+                          {user.manager ? user.manager : "-"}
+                        </td>
 
                         <td className="px-6 py-4 text-sm text-gray-600">
                           {user.email}
@@ -211,8 +203,7 @@ const AdminDashboard = () => {
                             <button
                               onClick={() => handleDeleteUser(user._id)}
                               className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Delete"
-                            >
+                              title="Delete">
                               <Trash2 size={18} />
                             </button>
                           </div>
@@ -283,8 +274,7 @@ const UserModal = ({ user, onClose, onSave }) => {
           </h3>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -313,8 +303,7 @@ const UserModal = ({ user, onClose, onSave }) => {
               onChange={(e) =>
                 setFormData({ ...formData, role: e.target.value })
               }
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-            >
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg">
               <option value="Employee">Employee</option>
               <option value="Manager">Manager</option>
             </select>
@@ -330,8 +319,7 @@ const UserModal = ({ user, onClose, onSave }) => {
                 onChange={(e) =>
                   setFormData({ ...formData, managerId: e.target.value })
                 }
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-              >
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg">
                 <option value="">Select Manager</option>
                 {managers.map((m) => (
                   <option key={m._id} value={m._id}>
@@ -359,14 +347,12 @@ const UserModal = ({ user, onClose, onSave }) => {
           <div className="flex space-x-3 pt-4">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-            >
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
               Cancel
             </button>
             <button
               onClick={handleSubmit}
-              className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-            >
+              className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
               {user ? "Update" : "Create"}
             </button>
           </div>

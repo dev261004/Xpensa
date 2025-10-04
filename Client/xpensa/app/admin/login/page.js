@@ -11,63 +11,63 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   // ✅ Handle Login Integration with XPens backend
- // ✅ Handle Login Integration with XPens backend
-const handleLogin = async (e) => {
-  e.preventDefault();
-  setError("");
-  setLoading(true);
+  // ✅ Handle Login Integration with XPens backend
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
-  try {
-    const res = await fetch("http://localhost:3010/api/v1/users/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: form.email,
-        password: form.password,
-      }),
-    });
+    try {
+      const res = await fetch("http://localhost:3010/api/v1/users/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password,
+        }),
+      });
 
-    console.log("Response Status:", res.status);
-    const data = await res.json();
-    console.log("Response Data:", data);
+      console.log("Response Status:", res.status);
+      const data = await res.json();
+      console.log("Response Data:", data);
 
-    // if (res.ok) {
-    //   // Save token in localStorage
-    //   const token = data.data.accessToken ;
-    //   const user = data.user || {};
+      // if (res.ok) {
+      //   // Save token in localStorage
+      //   const token = data.data.accessToken ;
+      //   const user = data.user || {};
 
-if (res.ok) {
-  const user = data.user || {};
-  const token = data.data?.accessToken; // may be undefined
+      if (res.ok) {
+        const user = data.user || {};
+        const token = data.data?.accessToken; // may be undefined
 
-    
-  if (token) {
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(user));
+        if (token) {
+          localStorage.setItem("token", token);
+          localStorage.setItem("user", JSON.stringify(user));
 
-    if (user.role === "Admin") {
-      router.push("/admin/dashboard");
-    } else if (user.role === "Manager") {
-      router.push("/manager/dashboard");
-    } else if (user.role === "Employee") {
-      router.push("/employee/dashboard");
-    } else {
-      router.push("/dashboard");}
-  } else {
-    setError("Login successful, but token missing.");
-  }
-} else {
-  setError(data.message || "Invalid credentials");
-}
-
-  } catch (err) {
-    console.error("Login Error:", err);
-    setError("Failed to connect to server. Please check backend URL or CORS.");
-  } finally {
-    setLoading(false);
-  }
-};
-
+          if (user.role === "Admin") {
+            router.push("/admin/dashboard");
+          } else if (user.role === "Manager") {
+            router.push("/manager/dashboard");
+          } else if (user.role === "Employee") {
+            router.push("/employee/dashboard");
+          } else {
+            router.push("/admin/dashboard");
+          }
+        } else {
+          setError("Login successful, but token missing.");
+        }
+      } else {
+        setError(data.message || "Invalid credentials");
+      }
+    } catch (err) {
+      console.error("Login Error:", err);
+      setError(
+        "Failed to connect to server. Please check backend URL or CORS."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50 flex items-center justify-center p-4">

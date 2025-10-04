@@ -76,8 +76,6 @@
 //   ));
 // };
 
-
-
 //   const getStatusColor = (status) => {
 //     switch (status) {
 //       case "Draft":
@@ -883,7 +881,3 @@ export default function EmployeeExpenseDashboard() {
     </div>
   );
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> f43cd03e2b463cc0347a000ba391d0f129e6f052
