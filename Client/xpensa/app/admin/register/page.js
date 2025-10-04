@@ -16,37 +16,35 @@ import {
 export default function RestaurantRegister() {
   const router = useRouter();
   const [form, setForm] = useState({
+    r_name: "",
     email: "",
     password: "",
     confirmPassword: "",
     country: "",
-    currency: "", // new
+    currency: "",
   });
-  const [countries, setCountries] = useState([]); // holds API data
+  const [countries, setCountries] = useState([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [cshowPassword, csetShowPassword] = useState(false);
 
+  // ✅ Fetch Countries
   useEffect(() => {
     fetch("https://api.sampleapis.com/countries/countries")
       .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! Status: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
         return res.json();
       })
       .then((data) => {
         if (data && Array.isArray(data)) {
-          // Sort countries alphabetically by name
           const countriesList = data
             .map((country) => ({
               name: country.name,
               currency: country.currency,
             }))
-            .sort((a, b) => a.name.localeCompare(b.name)); // Sorting alphabetically by country name
-
+            .sort((a, b) => a.name.localeCompare(b.name));
           setCountries(countriesList);
         } else {
           console.error("Unexpected data structure:", data);
@@ -59,6 +57,7 @@ export default function RestaurantRegister() {
       });
   }, []);
 
+  // ✅ Handle Input Change
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({
@@ -66,14 +65,12 @@ export default function RestaurantRegister() {
       [name]: value,
     }));
 
-    // If country changes, auto-select the first available currency
     if (name === "country") {
-      const found = countries.find((c) => c === value);
+      const found = countries.find((c) => c.name === value);
       if (found) {
-        // Your logic for setting currency based on country
         setForm((prev) => ({
           ...prev,
-          currency: "USD", // or find based on country logic
+          currency: found.currency || "USD",
         }));
       } else {
         setForm((prev) => ({ ...prev, currency: "" }));
@@ -81,6 +78,7 @@ export default function RestaurantRegister() {
     }
   };
 
+  // ✅ Handle Submit with Backend Integration
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -93,12 +91,14 @@ export default function RestaurantRegister() {
       !form.password ||
       !form.confirmPassword ||
       !form.country ||
-      !form.currency
+      !form.currency ||
+      !form.r_name
     ) {
       setError("All fields are required");
       setLoading(false);
       return;
     }
+
     if (form.password !== form.confirmPassword) {
       setError("Passwords do not match");
       setLoading(false);
@@ -106,26 +106,40 @@ export default function RestaurantRegister() {
     }
 
     try {
-      const res = await fetch(
-        "https://foods24-be.vercel.app/auth/restaurant/register",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        }
-      );
+      // 🟩 Your teammate's backend register API integration
+      const res = await fetch("http://localhost:3010/api/v1/users/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.r_name,
+          email: form.email,
+          password: form.password,
+          confirmPassword: form.confirmPassword,
+          country: form.country,
+        }),
+      });
 
-      const body = await res.json();
-      if (!res.ok) {
-        throw new Error(body.message || "Registration failed");
+      console.log("Status:", res.status);
+      console.log("Content-Type:", res.headers.get("content-type"));
+
+      const text = await res.text();
+      console.log("Raw Response:", text);
+
+      try {
+        const body = JSON.parse(text);
+        if (!res.ok) throw new Error(body.message || "Registration failed");
+        setSuccess("User registered successfully!");
+      } catch (e) {
+        console.error("JSON Parse Error:", e);
+        setError("Unexpected response from server.");
       }
 
-      setSuccess("Restaurant registered successfully!");
-
+        // Redirect after success
       setTimeout(() => {
-        router.push("/restaurant/login");
+        router.push("/admin/login");
       }, 2000);
     } catch (err) {
+      console.error("Register Error:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -133,13 +147,13 @@ export default function RestaurantRegister() {
   };
 
   const validateForm = () => {
-    // include new fields
     return (
       form.email &&
       form.password &&
       form.confirmPassword &&
       form.country &&
-      form.currency
+      form.currency &&
+      form.r_name
     );
   };
 
@@ -153,9 +167,7 @@ export default function RestaurantRegister() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Join Our Platform
           </h1>
-          <p className="text-gray-600">
-            Start your journey as a restaurant partner
-          </p>
+          <p className="text-gray-600">Start your journey as a partner</p>
         </div>
 
         <div className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-8">
@@ -191,7 +203,7 @@ export default function RestaurantRegister() {
                   type="text"
                   name="r_name"
                   placeholder="Your name"
-                  value={form.r_name || ""}
+                  value={form.r_name}
                   onChange={handleChange}
                   required
                   className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white/50"
@@ -218,7 +230,7 @@ export default function RestaurantRegister() {
               </div>
             </div>
 
-            {/* Country Select */}
+            {/* Country */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Country *
