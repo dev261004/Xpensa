@@ -1,17 +1,17 @@
 import express from "express";
-<<<<<<< HEAD
+
 import userRouter from './routes/user.routes.js';
 import contactRouter from './routes/contact.route.js'
 import forgotPasswordRouter from './routes/forgotPassword.js'
 import adminRouter from './routes/admin.routes.js'
 import expensesRouter from "./routes/expense.routes.js"
 import managerRoutes from "./routes/manager.routes.js"
-=======
+
 import userRouter from "./routes/user.routes.js";
 import contactRouter from "./routes/contact.route.js";
 import forgotPasswordRouter from "./routes/forgotPassword.js";
 import adminRouter from "./routes/admin.routes.js";
->>>>>>> ce325b62e4f8c90de8a5fa8945237277fbb7b083
+
 import cors from "cors";
 import cookieParser from "cookie-parser";
 

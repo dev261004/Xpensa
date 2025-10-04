@@ -74,6 +74,29 @@ Please login and change your password immediately.
   });
 });
 
+// Get all users with manager details
+const getAllUsers = asyncHandler(async (req, res) => {
+  const users = await User.find({})
+    .populate("managerId", "name email") // populate manager details
+    .select("name email role managerId");
+
+  const formattedUsers = users.map(user => ({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role,
+    manager: user.managerId ? user.managerId.name : null, // show manager name if exists
+    managerEmail: user.managerId ? user.managerId.email : null,
+  }));
+
+  return res.status(200).json({
+    status: "success",
+    data: formattedUsers,
+  });
+});
+
+
+
 // Fetch all users with role = Manager
 const getAllManagers = asyncHandler(async (req, res) => {
   const managers = await User.find({ role: "Manager" }).select(
@@ -86,7 +109,7 @@ const getAllManagers = asyncHandler(async (req, res) => {
   });
 });
 
-export { createUser, getAllManagers };
+export { createUser, getAllUsers,getAllManagers };
 
 
 
