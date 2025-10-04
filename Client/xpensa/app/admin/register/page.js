@@ -16,35 +16,48 @@ import {
 export default function RestaurantRegister() {
   const router = useRouter();
   const [form, setForm] = useState({
+    r_name: "",
     email: "",
     password: "",
     confirmPassword: "",
     country: "",
-    currency: "",     // new
+    currency: "",
   });
-  const [countries, setCountries] = useState([]); // holds API data
+  const [countries, setCountries] = useState([]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [cshowPassword, csetShowPassword] = useState(false);
 
+  // ✅ Fetch Countries
   useEffect(() => {
-    // Fetch country + currency data from backend API
-    fetch("/api/countries")
-      .then((res) => res.json())
+    fetch("https://api.sampleapis.com/countries/countries")
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
-        if (data.success) {
-          setCountries(data.data);
+        if (data && Array.isArray(data)) {
+          const countriesList = data
+            .map((country) => ({
+              name: country.name,
+              currency: country.currency,
+            }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+          setCountries(countriesList);
         } else {
-          console.error("Failed to fetch countries:", data.message);
+          console.error("Unexpected data structure:", data);
+          setCountries([]);
         }
       })
       .catch((err) => {
         console.error("Error fetching countries:", err);
+        setError("Failed to fetch country data");
       });
   }, []);
 
+  // ✅ Handle Input Change
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({
@@ -52,13 +65,12 @@ export default function RestaurantRegister() {
       [name]: value,
     }));
 
-    // If country changes, auto-select the first available currency
     if (name === "country") {
-      const found = countries.find((c) => c.country === value);
-      if (found && found.currencies && found.currencies.length > 0) {
+      const found = countries.find((c) => c.name === value);
+      if (found) {
         setForm((prev) => ({
           ...prev,
-          currency: found.currencies[0],
+          currency: found.currency || "USD",
         }));
       } else {
         setForm((prev) => ({ ...prev, currency: "" }));
@@ -66,6 +78,7 @@ export default function RestaurantRegister() {
     }
   };
 
+  // ✅ Handle Submit with Backend Integration
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -78,12 +91,14 @@ export default function RestaurantRegister() {
       !form.password ||
       !form.confirmPassword ||
       !form.country ||
-      !form.currency
+      !form.currency ||
+      !form.r_name
     ) {
       setError("All fields are required");
       setLoading(false);
       return;
     }
+
     if (form.password !== form.confirmPassword) {
       setError("Passwords do not match");
       setLoading(false);
@@ -91,26 +106,40 @@ export default function RestaurantRegister() {
     }
 
     try {
-      const res = await fetch(
-        "https://foods24-be.vercel.app/auth/restaurant/register",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        }
-      );
+      // 🟩 Your teammate's backend register API integration
+      const res = await fetch("http://localhost:3010/api/v1/users/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.r_name,
+          email: form.email,
+          password: form.password,
+          confirmPassword: form.confirmPassword,
+          country: form.country,
+        }),
+      });
 
-      const body = await res.json();
-      if (!res.ok) {
-        throw new Error(body.message || "Registration failed");
+      console.log("Status:", res.status);
+      console.log("Content-Type:", res.headers.get("content-type"));
+
+      const text = await res.text();
+      console.log("Raw Response:", text);
+
+      try {
+        const body = JSON.parse(text);
+        if (!res.ok) throw new Error(body.message || "Registration failed");
+        setSuccess("User registered successfully!");
+      } catch (e) {
+        console.error("JSON Parse Error:", e);
+        setError("Unexpected response from server.");
       }
 
-      setSuccess("Restaurant registered successfully!");
-
+        // Redirect after success
       setTimeout(() => {
-        router.push("/restaurant/login");
+        router.push("/admin/login");
       }, 2000);
     } catch (err) {
+      console.error("Register Error:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -118,13 +147,13 @@ export default function RestaurantRegister() {
   };
 
   const validateForm = () => {
-    // include new fields
     return (
       form.email &&
       form.password &&
       form.confirmPassword &&
       form.country &&
-      form.currency
+      form.currency &&
+      form.r_name
     );
   };
 
@@ -138,9 +167,7 @@ export default function RestaurantRegister() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Join Our Platform
           </h1>
-          <p className="text-gray-600">
-            Start your journey as a restaurant partner
-          </p>
+          <p className="text-gray-600">Start your journey as a partner</p>
         </div>
 
         <div className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-8">
@@ -176,8 +203,7 @@ export default function RestaurantRegister() {
                   type="text"
                   name="r_name"
                   placeholder="Your name"
-                  // If you want this to be part of form, uncomment next two lines
-                  value={form.r_name || ""}
+                  value={form.r_name}
                   onChange={handleChange}
                   required
                   className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white/50"
@@ -204,7 +230,7 @@ export default function RestaurantRegister() {
               </div>
             </div>
 
-            {/* Country Select */}
+            {/* Country */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
                 Country *
@@ -215,19 +241,16 @@ export default function RestaurantRegister() {
                   value={form.country}
                   onChange={handleChange}
                   required
-                  className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white/50"
-                >
+                  className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white/50">
                   <option value="">Select Country</option>
-                  {countries.map((c) => (
-                    <option key={c.country} value={c.country}>
-                      {c.country}
+                  {countries.map((country) => (
+                    <option key={country.name} value={country.name}>
+                      {country.name}
                     </option>
                   ))}
                 </select>
               </div>
             </div>
-
-           
 
             {/* Password */}
             <div className="space-y-2">
@@ -248,9 +271,12 @@ export default function RestaurantRegister() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -274,9 +300,12 @@ export default function RestaurantRegister() {
                 <button
                   type="button"
                   onClick={() => csetShowPassword(!cshowPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  {cshowPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                  {cshowPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -285,8 +314,7 @@ export default function RestaurantRegister() {
             <button
               type="submit"
               disabled={loading || !validateForm()}
-              className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-lg hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-            >
+              className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-lg hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
               {loading ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
               ) : (
@@ -301,8 +329,7 @@ export default function RestaurantRegister() {
             <button
               type="button"
               onClick={() => router.push("/")}
-              className="w-full bg-white border-2 border-gray-300 text-gray-700 py-3 rounded-lg hover:border-green-400 hover:text-green-600 transition-all duration-200 flex items-center justify-center space-x-2 shadow-sm hover:shadow-md"
-            >
+              className="w-full bg-white border-2 border-gray-300 text-gray-700 py-3 rounded-lg hover:border-green-400 hover:text-green-600 transition-all duration-200 flex items-center justify-center space-x-2 shadow-sm hover:shadow-md">
               <ArrowLeft className="w-5 h-5" />
               <span className="font-medium">Back to Home</span>
             </button>

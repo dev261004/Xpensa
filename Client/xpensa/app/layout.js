@@ -12,8 +12,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Food Ordering App",
-  description: "On-Table Food Ordering System",
+  title: "Xpensa",
+  description: "Expenses System",
 };
 
 export default function RootLayout({ children }) {

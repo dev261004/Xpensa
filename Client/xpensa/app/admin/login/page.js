@@ -3,54 +3,71 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from "lucide-react";
 
-export default function RestaurantLogin() {
+export default function LoginPage() {
   const router = useRouter();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  // ✅ Handle Login Integration with XPens backend
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      const res = await fetch(
-        "https://foods24-be.vercel.app/auth/restaurant/login",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        }
-      );
+      const res = await fetch("http://localhost:3010/api/v1/users/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password,
+        }),
+      });
+
+      // Log for debugging
+      console.log("Response Status:", res.status);
 
       const data = await res.json();
-      if (res.ok && data.token) {
-        localStorage.setItem("token", data.token);
-        router.push("/restaurant/dashboard");
+      console.log("Response Data:", data);
+
+      if (res.ok) {
+        // Save token in localStorage
+        const token = data.data.accessToken;
+        console.log(`Token is ${token}`);
+        if (token) {
+          localStorage.setItem("token", token);
+          localStorage.setItem("user", JSON.stringify(data.user || {}));
+          router.push("/admin/dashboard");
+        } else {
+          setError("Login successful, but token missing.");
+        }
       } else {
-        setError(data.error || "Login failed");
+        setError(data.message || "Invalid credentials");
       }
     } catch (err) {
-      setError("Server error. Please try again.");
+      console.error("Login Error:", err);
+      setError(
+        "Failed to connect to server. Please check backend URL or CORS."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl shadow-lg mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-2xl shadow-lg mb-4">
             <User className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Welcome Back
           </h1>
-          <p className="text-gray-600">Sign in to your restaurant dashboard</p>
+          <p className="text-gray-600">Sign in to continue to XPens</p>
         </div>
 
         {/* Login Form */}
@@ -73,7 +90,7 @@ export default function RestaurantLogin() {
                 <input
                   type="email"
                   placeholder="Enter your email"
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white/50"
+                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white/50"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   required
@@ -91,7 +108,7 @@ export default function RestaurantLogin() {
                 <input
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
-                  className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white/50"
+                  className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white/50"
                   value={form.password}
                   onChange={(e) =>
                     setForm({ ...form, password: e.target.value })
@@ -115,7 +132,7 @@ export default function RestaurantLogin() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 rounded-lg hover:from-orange-600 hover:to-red-600 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+              className="w-full bg-gradient-to-r from-indigo-500 to-blue-500 text-white py-3 rounded-lg hover:from-indigo-600 hover:to-blue-600 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
               {loading ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
               ) : (
@@ -126,11 +143,11 @@ export default function RestaurantLogin() {
               )}
             </button>
 
-            {/* Register Button */}
+            {/* Forgot Password */}
             <button
               type="button"
-              onClick={() => router.push("/admin/forgotpassword")}
-              className="w-full bg-white border-2 border-gray-300 text-gray-700 py-3 rounded-lg hover:border-orange-400 hover:text-orange-600 transition-all duration-200 flex items-center justify-center space-x-2 shadow-sm hover:shadow-md">
+              onClick={() => router.push("/forgotpassword")}
+              className="w-full bg-white border-2 border-gray-300 text-gray-700 py-3 rounded-lg hover:border-indigo-400 hover:text-indigo-600 transition-all duration-200 flex items-center justify-center space-x-2 shadow-sm hover:shadow-md">
               <span className="font-medium">Forgot Password</span>
             </button>
           </form>
@@ -139,7 +156,7 @@ export default function RestaurantLogin() {
         {/* Footer */}
         <div className="text-center mt-6">
           <p className="text-sm text-gray-500">
-            Secure login protected by industry-standard encryption
+            XPens – Secure login powered by JWT authentication
           </p>
         </div>
       </div>
