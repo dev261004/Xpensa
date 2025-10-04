@@ -23,7 +23,7 @@ const AdminDashboard = () => {
         { name: 'Andrew', required: false }
       ],
       sequenced: false,
-      minApprovalPercentage: 50
+      minApprovalPercentage: 60
     }
   ]);
 
