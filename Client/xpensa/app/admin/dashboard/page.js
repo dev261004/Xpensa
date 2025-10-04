@@ -200,8 +200,9 @@ const AdminDashboard = () => {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-900">
-                          {user.managerId ? user.managerId.name : "-"}
-                        </td>
+  {user.manager ? user.manager : "-"}
+</td>
+
                         <td className="px-6 py-4 text-sm text-gray-600">
                           {user.email}
                         </td>
