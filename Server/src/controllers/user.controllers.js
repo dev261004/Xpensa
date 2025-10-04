@@ -100,7 +100,10 @@ const loginUser = asyncHandler(async (req, res) =>{
   if (!user) {
     throw new ApiError(404, "User does not exist");
   }
- if (user.tempPassword) {
+if (user.tempPassword) {
+  // Generate tokens even if it's a temporary password
+  const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id);
+
   return res.status(200).json({
     status: "success",
     message: "Login successful. You must change your temporary password.",
@@ -109,9 +112,16 @@ const loginUser = asyncHandler(async (req, res) =>{
       _id: user._id,
       email: user.email,
       name: user.name,
+      role: user.role,
+    },
+    data: {
+      accessToken,
+      refreshToken,
     },
   });
 }
+
+
   // Validate password
   const isPasswordValid = await user.isPasswordCorrect(password);
   if (!isPasswordValid) {

@@ -19,28 +19,34 @@ export default function ResetPassword() {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(
-        "https://foods24-be.vercel.app/auth/restaurant/reset-password",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(form),
-        }
-      );
+      // 👇 get email from stored user in localStorage
+      const storedUser = JSON.parse(localStorage.getItem("user"));
+      if (!storedUser?.email) {
+        setError("User email not found. Please login again.");
+        setLoading(false);
+        return;
+      }
+
+      const res = await fetch("http://localhost:3010/api/v1/users/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: storedUser.email,
+          tempPassword: form.oldPassword, // old password field = temp password
+          newPassword: form.newPassword,
+        }),
+      });
 
       const data = await res.json();
 
       if (res.ok) {
         setSuccess("Password updated successfully!");
-        setTimeout(() => router.push("/restaurant/dashboard"), 2000);
+        setTimeout(() => router.push("/admin/login"), 2000); // redirect to login
       } else {
-        setError(data.error || "Failed to reset password");
+        setError(data.message || "Failed to reset password");
       }
     } catch (err) {
+      console.error(err);
       setError("Server error. Please try again.");
     } finally {
       setLoading(false);
@@ -77,16 +83,16 @@ export default function ResetPassword() {
               </div>
             )}
 
-            {/* Existing Password */}
+            {/* Temporary Password */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">
-                Existing Password
+                Temporary Password
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type={showOld ? "text" : "password"}
-                  placeholder="Enter your current password"
+                  placeholder="Enter your temporary password"
                   className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white/50"
                   value={form.oldPassword}
                   onChange={(e) =>
