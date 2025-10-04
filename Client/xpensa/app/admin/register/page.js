@@ -20,7 +20,7 @@ export default function RestaurantRegister() {
     password: "",
     confirmPassword: "",
     country: "",
-    currency: "",     // new
+    currency: "", // new
   });
   const [countries, setCountries] = useState([]); // holds API data
   const [error, setError] = useState("");
@@ -30,18 +30,32 @@ export default function RestaurantRegister() {
   const [cshowPassword, csetShowPassword] = useState(false);
 
   useEffect(() => {
-    // Fetch country + currency data from backend API
-    fetch("/api/countries")
-      .then((res) => res.json())
+    fetch("https://api.sampleapis.com/countries/countries")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! Status: ${res.status}`);
+        }
+        return res.json();
+      })
       .then((data) => {
-        if (data.success) {
-          setCountries(data.data);
+        if (data && Array.isArray(data)) {
+          // Sort countries alphabetically by name
+          const countriesList = data
+            .map((country) => ({
+              name: country.name,
+              currency: country.currency,
+            }))
+            .sort((a, b) => a.name.localeCompare(b.name)); // Sorting alphabetically by country name
+
+          setCountries(countriesList);
         } else {
-          console.error("Failed to fetch countries:", data.message);
+          console.error("Unexpected data structure:", data);
+          setCountries([]);
         }
       })
       .catch((err) => {
         console.error("Error fetching countries:", err);
+        setError("Failed to fetch country data");
       });
   }, []);
 
@@ -54,11 +68,12 @@ export default function RestaurantRegister() {
 
     // If country changes, auto-select the first available currency
     if (name === "country") {
-      const found = countries.find((c) => c.country === value);
-      if (found && found.currencies && found.currencies.length > 0) {
+      const found = countries.find((c) => c === value);
+      if (found) {
+        // Your logic for setting currency based on country
         setForm((prev) => ({
           ...prev,
-          currency: found.currencies[0],
+          currency: "USD", // or find based on country logic
         }));
       } else {
         setForm((prev) => ({ ...prev, currency: "" }));
@@ -176,7 +191,6 @@ export default function RestaurantRegister() {
                   type="text"
                   name="r_name"
                   placeholder="Your name"
-                  // If you want this to be part of form, uncomment next two lines
                   value={form.r_name || ""}
                   onChange={handleChange}
                   required
@@ -215,19 +229,16 @@ export default function RestaurantRegister() {
                   value={form.country}
                   onChange={handleChange}
                   required
-                  className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white/50"
-                >
+                  className="w-full pl-4 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white/50">
                   <option value="">Select Country</option>
-                  {countries.map((c) => (
-                    <option key={c.country} value={c.country}>
-                      {c.country}
+                  {countries.map((country) => (
+                    <option key={country.name} value={country.name}>
+                      {country.name}
                     </option>
                   ))}
                 </select>
               </div>
             </div>
-
-           
 
             {/* Password */}
             <div className="space-y-2">
@@ -248,9 +259,12 @@ export default function RestaurantRegister() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -274,9 +288,12 @@ export default function RestaurantRegister() {
                 <button
                   type="button"
                   onClick={() => csetShowPassword(!cshowPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  {cshowPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
+                  {cshowPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -285,8 +302,7 @@ export default function RestaurantRegister() {
             <button
               type="submit"
               disabled={loading || !validateForm()}
-              className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-lg hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-            >
+              className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-3 rounded-lg hover:from-green-600 hover:to-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
               {loading ? (
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
               ) : (
@@ -301,8 +317,7 @@ export default function RestaurantRegister() {
             <button
               type="button"
               onClick={() => router.push("/")}
-              className="w-full bg-white border-2 border-gray-300 text-gray-700 py-3 rounded-lg hover:border-green-400 hover:text-green-600 transition-all duration-200 flex items-center justify-center space-x-2 shadow-sm hover:shadow-md"
-            >
+              className="w-full bg-white border-2 border-gray-300 text-gray-700 py-3 rounded-lg hover:border-green-400 hover:text-green-600 transition-all duration-200 flex items-center justify-center space-x-2 shadow-sm hover:shadow-md">
               <ArrowLeft className="w-5 h-5" />
               <span className="font-medium">Back to Home</span>
             </button>

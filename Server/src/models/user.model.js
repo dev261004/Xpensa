@@ -9,7 +9,7 @@ const userSchema = new Schema(
       required: true,
       lowercase: true,
       trim: true,
-      index: true,
+
     },
     email: {
       type: String,
@@ -34,7 +34,7 @@ const userSchema = new Schema(
     role: {
       type: String,
       enum: ["Admin", "Manager", "Employee"],
-      default: "Employee",
+      default: "Admin",
     },
     companyId: {
       type: Schema.Types.ObjectId,

@@ -2,7 +2,7 @@ import express from "express";
 import userRouter from './routes/user.routes.js';
 import contactRouter from './routes/contact.route.js'
 import forgotPasswordRouter from './routes/forgotPassword.js'
-
+import adminRouter from './routes/admin.routes.js'
 import cors from "cors";
 import cookieParser from "cookie-parser"
 
@@ -24,5 +24,7 @@ app.use(cookieParser())
 app.use("/api/v1/users", userRouter,forgotPasswordRouter)
 
 app.use("/api/v1/contact",contactRouter)
+
+app.use("/api/v1/admin",adminRouter)
 
 export {app};
