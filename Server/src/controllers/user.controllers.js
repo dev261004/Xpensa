@@ -40,7 +40,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   // 🚀 Check if company exists
   let company = await Company.findOne({ country }); // optional: you can make companyName later
-  let role = "Employee";
+  let role = "Admin";
 
   if (!company) {
     // Fetch currency for selected country
