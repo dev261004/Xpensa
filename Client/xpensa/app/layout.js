@@ -13,15 +13,14 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Xpensa",
-  description: "Expenses System",
+  description: "Expense Management",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-100` }
-      >
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-100`}>
         {children}
       </body>
     </html>

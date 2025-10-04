@@ -1,8 +1,8 @@
 import Link from "next/link";
 
 export const metadata = {
-  title: "Foods24 - Order Your Favorite Food",
-  description: "Premium food ordering experience with fast delivery",
+  title: "Xpensa",
+  description: "Expense Management app",
 };
 
 export default function Home() {
@@ -27,12 +27,11 @@ export default function Home() {
                 viewBox="0 0 24 24">
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
               </svg>
-             
             </div>
             <h1 className="text-4xl font-bold text-white mb-2 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
               Xpensa
             </h1>
-            <p className="text-white/70 text-lg">ipsum</p>
+            <p className="text-white/70 text-lg">Expense Management</p>
           </div>
 
           {/* Action Buttons */}

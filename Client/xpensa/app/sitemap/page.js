@@ -10,7 +10,7 @@ const routes = [
   { path: "/employee/dashboard", name: "Employee Dashboard" },
   { path: "/manager/dashboard", name: "Manager Dashboard" },
   { path: "/reset-password", name: "Reset Password" },
-  { path: "/sitemap", name: "Sitemap" },
+  
 ];
 
 export default function SiteMap() {

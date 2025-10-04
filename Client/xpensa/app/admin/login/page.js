@@ -146,7 +146,7 @@ export default function LoginPage() {
             {/* Forgot Password */}
             <button
               type="button"
-              onClick={() => router.push("/forgotpassword")}
+              onClick={() => router.push("/admin/forgotpassword")}
               className="w-full bg-white border-2 border-gray-300 text-gray-700 py-3 rounded-lg hover:border-indigo-400 hover:text-indigo-600 transition-all duration-200 flex items-center justify-center space-x-2 shadow-sm hover:shadow-md">
               <span className="font-medium">Forgot Password</span>
             </button>
@@ -156,7 +156,7 @@ export default function LoginPage() {
         {/* Footer */}
         <div className="text-center mt-6">
           <p className="text-sm text-gray-500">
-            XPens – Secure login powered by JWT authentication
+            XPensa – Secure login powered by JWT authentication
           </p>
         </div>
       </div>
