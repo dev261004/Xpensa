@@ -11,7 +11,7 @@ const generateRandomPassword = (length = 8) => {
 
 const createUser = asyncHandler(async (req, res) => {
   const { name, email, role, managerId } = req.body;
-
+   console.log("user :",req.user);
   // 1️⃣ Validate input
   if (!name || !email || !role) {
     throw new ApiError(400, "Name, email, and role are required");
@@ -32,20 +32,27 @@ const createUser = asyncHandler(async (req, res) => {
     throw new ApiError(409, "User with this email already exists");
   }
 
-  // 4️⃣ Generate temporary password
+  // 4️⃣ Get companyId from the logged-in Admin
+  const companyId = req.user?.companyId;
+  if (!companyId) {
+    throw new ApiError(400, "Admin's companyId not found. Please ensure Admin is linked to a company.");
+  }
+
+  // 5️⃣ Generate temporary password
   const tempPassword = generateRandomPassword();
 
-  // 5️⃣ Create user
+  // 6️⃣ Create user and attach same companyId as admin
   const newUser = await User.create({
     name,
     email,
     role,
     managerId: role === "Employee" ? managerId : null,
     password: tempPassword,
-    tempPassword: true, // marks that password is temporary
+    tempPassword: true,
+    companyId, // ✅ Added automatically from Admin
   });
 
-  // 6️⃣ Send email with credentials
+  // 7️⃣ Send email with credentials
   await sendEmail({
     to: email,
     subject: "Your Login Credentials",
@@ -60,7 +67,7 @@ Please login and change your password immediately.
 `,
   });
 
-  // 7️⃣ Respond to Admin
+  // 8️⃣ Respond to Admin
   return res.status(201).json({
     status: "success",
     message: "User created and credentials sent via email",
@@ -70,9 +77,11 @@ Please login and change your password immediately.
       email: newUser.email,
       role: newUser.role,
       managerId: newUser.managerId,
+      companyId: newUser.companyId, // optional to include
     },
   });
 });
+
 
 // Get all users with manager details
 const getAllUsers = asyncHandler(async (req, res) => {

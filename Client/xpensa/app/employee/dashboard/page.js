@@ -25,43 +25,51 @@ export default function EmployeeExpenseDashboard() {
     remarks: "",
   });
 
-  // Fetch employee expenses from backend
-  useEffect(() => {
-    const fetchExpenses = async () => {
-      try {
-        const res = await axios.get("http://localhost:3010/api/v1/expenses/", {
-          withCredentials: true,
-        });
-        setExpenses(res.data.data);
-      } catch (err) {
-        console.error("Error fetching expenses:", err);
-      }
-    };
-    fetchExpenses();
-  }, []);
 
-  // Create new expense
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+// Fetch employee expenses
+useEffect(() => {
+  const fetchExpenses = async () => {
     try {
-      const res = await axios.post("http://localhost:3010/api/v1/expenses/", newExpense, {
-        withCredentials: true,
+      const token = localStorage.getItem("token"); // ✅ get token
+      const res = await axios.get("http://localhost:3010/api/v1/expenses/", {
+        headers: {
+          Authorization: `Bearer ${token}`, // ✅ attach token
+        },
       });
-
-      setExpenses([res.data.data, ...expenses]);
-      setNewExpense({
-        description: "",
-        date: "",
-        category: "Food",
-        amount: "",
-        currency: "rs",
-        remarks: "",
-      });
-      setShowNewExpense(false);
+      setExpenses(res.data.data);
     } catch (err) {
-      console.error("Error creating expense:", err);
+      console.error("Error fetching expenses:", err);
     }
   };
+  fetchExpenses();
+}, []);
+
+// Create new expense
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  try {
+    const token = localStorage.getItem("token"); // ✅ get token
+    const res = await axios.post("http://localhost:3010/api/v1/expenses/", newExpense, {
+      headers: {
+        Authorization: `Bearer ${token}`, // ✅ attach token
+      },
+    });
+
+    setExpenses([res.data.data, ...expenses]);
+    setNewExpense({
+      description: "",
+      date: "",
+      category: "Food",
+      amount: "",
+      currency: "rs",
+      remarks: "",
+    });
+    setShowNewExpense(false);
+  } catch (err) {
+    console.error("Error creating expense:", err);
+  }
+};
+
 
   // Submit for approval
 const submitForApproval = (_id) => {
