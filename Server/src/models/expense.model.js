@@ -20,7 +20,7 @@ const expenseSchema = new Schema(
     remarks: { type: String },
     status: {
       type: String,
-      enum: ["Draft", "Processing", "Approved", "Rejected"],
+        enum: ["Draft", "Processing", "Waiting approval", "Approved", "Rejected"],
       default: "Draft",
     },
     paidBy: {

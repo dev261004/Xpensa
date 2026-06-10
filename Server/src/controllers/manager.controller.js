@@ -2,39 +2,78 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { Expense } from "../models/expense.model.js";
 import { User } from "../models/user.model.js";
+import { Company } from "../models/company.model.js";
 import axios from "axios";
 
 const getManagerPendingExpenses = asyncHandler(async (req, res) => {
-  // 1. Find all employees who report to this manager
-  const employees = await User.find({ managerId: req.user._id }).select("_id name");
-
+  // 1️⃣ Find all employees under this manager
+  const employees = await User.find({ managerId: req.user._id }).select("_id name email");
   const employeeIds = employees.map((emp) => emp._id);
 
-  // 2. Find all expenses with status Processing submitted by these employees
+  if (employeeIds.length === 0) {
+    return res.status(200).json({
+      status: "success",
+      message: "No employees assigned to this manager",
+      data: [],
+    });
+  }
+
+  // 2️⃣ Find only those employees who have 'Processing' expenses
   const expenses = await Expense.find({
     employeeId: { $in: employeeIds },
     status: "Processing",
-  }).populate("employeeId", "name email");
+  })
+    .populate("employeeId", "name email managerId")
+    .sort({ createdAt: -1 });
 
-  // 3. Get company's base currency from logged-in manager
-  const companyCurrency = req.user.companyId?.currency || "USD"; // fallback to USD
+  // 3️⃣ Get list of employees who have at least one expense
+  const employeesWithExpenses = employees.filter((emp) =>
+    expenses.some((exp) => String(exp.employeeId._id) === String(emp._id))
+  );
 
-  // 4. Convert employee amount to company base currency if needed
+  // 4️⃣ Convert currency if needed
+  const companyCurrency = req.user.companyId?.currency || "USD";
   const convertedExpenses = await Promise.all(
     expenses.map(async (expense) => {
-      let convertedAmount = expense.amount;
+    //   let convertedAmount = expense.amount;
+    //  // console.log("expense.currency",expense.currency);
+    //   if (expense.currency !== companyCurrency) {
+    //     try {
+    //       const response = await axios.get(
+    //         `https://api.exchangerate-api.com/v4/latest/${companyCurrency}`
+    //       );
+          
+    //        const rates = response.data.rates;
+    //      // console.log("rate of ${expense.currency} ",rates);
+    //       convertedAmount = expense.amount * (rates[expense.currency] || 1);
+    //     } catch (err) {
+    //       console.error("Currency conversion failed", err.message);
+    //     }
+    //   }
+    // --- inside expenses.map(async expense => { ... })
+let convertedAmount = Number(expense.amount); // keep same units as expense.amount
 
-      if (expense.currency !== companyCurrency) {
-        try {
-          const response = await axios.get(
-            `https://api.exchangerate-api.com/v4/latest/${expense.currency}`
-          );
-          const rates = response.data.rates;
-          convertedAmount = expense.amount / rates[companyCurrency]; // convert to base
-        } catch (err) {
-          console.error("Currency conversion failed", err.message);
-        }
-      }
+if (expense.currency && companyCurrency && expense.currency !== companyCurrency) {
+  try {
+    // Use expense.currency as API base and multiply by rate->companyCurrency
+    const url = `https://api.exchangerate-api.com/v4/latest/${encodeURIComponent(expense.currency)}`;
+    const response = await axios.get(url, { timeout: 5000 });
+    const rates = response.data?.rates || {};
+    const rate = rates[companyCurrency];
+
+    if (rate && !isNaN(rate)) {
+      // expense.amount is major units -> multiply, then round to 2 decimals
+      convertedAmount = Number((Number(expense.amount) * Number(rate)).toFixed(2));
+    } else {
+      console.warn(`Conversion rate for ${expense.currency} -> ${companyCurrency} not found`, rates);
+      // keep convertedAmount as original amount (fallback)
+    }
+  } catch (err) {
+    console.error("Currency conversion failed", err.message);
+    // fallback: keep convertedAmount = expense.amount
+  }
+}
+
 
       return {
         _id: expense._id,
@@ -47,13 +86,20 @@ const getManagerPendingExpenses = asyncHandler(async (req, res) => {
         currency: expense.currency,
         convertedAmount,
         status: expense.status,
-        employee: expense.employeeId.name,
+        employee: {
+          id: expense.employeeId._id,
+          name: expense.employeeId.name,
+          email: expense.employeeId.email,
+        },
       };
     })
   );
 
+  // 5️⃣ Send filtered result
   return res.status(200).json({
     status: "success",
+    message: "Pending expenses fetched successfully",
+    employeesWithExpenses,
     data: convertedExpenses,
   });
 });
@@ -72,7 +118,8 @@ const updateExpenseStatus = asyncHandler(async (req, res) => {
   }
 
   // Check if manager is authorized
-  if (String(expense.managerId) !== String(req.user._id)) {
+  const employee = await User.findById(expense.employeeId);
+  if (!employee || String(employee.managerId) !== String(req.user._id)) {
     throw new ApiError(403, "You are not authorized to approve/reject this expense");
   }
 
@@ -88,6 +135,23 @@ const updateExpenseStatus = asyncHandler(async (req, res) => {
   });
 });
 
+const getManagerCompany = asyncHandler(async (req, res) => {
+  if (!req.user.companyId) {
+    throw new ApiError(404, "Manager has no associated company");
+  }
 
+  const company = await Company.findById(req.user.companyId);
+  if (!company) {
+    throw new ApiError(404, "Company not found");
+  }
 
-export { getManagerPendingExpenses,updateExpenseStatus };
+  return res.status(200).json({
+    status: "success",
+    data: {
+      name: company.name,
+      currency: company.currency,
+    },
+  });
+});
+
+export { getManagerPendingExpenses, updateExpenseStatus, getManagerCompany  };

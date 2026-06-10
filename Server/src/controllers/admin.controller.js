@@ -85,7 +85,7 @@ Please login and change your password immediately.
 
 // Get all users with manager details
 const getAllUsers = asyncHandler(async (req, res) => {
-  const users = await User.find({})
+  const users = await User.find({role: { $in: ["Employee", "Manager"] }})
     .populate("managerId", "name email") // populate manager details
     .select("name email role managerId");
 

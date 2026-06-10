@@ -61,7 +61,7 @@ const handleSubmit = async (e) => {
       date: "",
       category: "Food",
       amount: "",
-      currency: "rs",
+      currency: "INR",
       remarks: "",
     });
     setShowNewExpense(false);
@@ -70,19 +70,54 @@ const handleSubmit = async (e) => {
   }
 };
 
+// Submit for approval
+const submitForApproval = async (_id) => {
+  try {
+    const token = localStorage.getItem("token");
+    await axios.patch(
+      `http://localhost:3010/api/v1/expenses/${_id}/status`,
+      { status: "Waiting approval" },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-  // Submit for approval
-const submitForApproval = (_id) => {
-  setExpenses(expenses.map(exp =>
-    exp._id === _id ? { ...exp, status: "Waiting approval", submittedDate: new Date().toISOString().split("T")[0] } : exp
-  ));
+    // update local state
+    setExpenses((prev) =>
+      prev.map((exp) =>
+        exp._id === _id ? { ...exp, status: "Waiting approval" } : exp
+      )
+    );
+  } catch (err) {
+    console.error("Error submitting for approval:", err);
+  }
 };
 
-const approveExpense = (_id) => {
-  setExpenses(expenses.map(exp =>
-    exp._id === _id ? { ...exp, status: "Approved", approvedDate: new Date().toLocaleString(), approver: "Sarah" } : exp
-  ));
+const approveExpense = async (_id) => {
+  try {
+    const token = localStorage.getItem("token");
+    await axios.patch(
+      `http://localhost:3010/api/v1/expenses/${_id}/status`,
+      { status: "Approved" },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    // update local state
+    setExpenses((prev) =>
+      prev.map((exp) =>
+        exp._id === _id
+          ? {
+              ...exp,
+              status: "Approved",
+              approvedDate: new Date().toLocaleString(),
+              approver: "Manager",
+            }
+          : exp
+      )
+    );
+  } catch (err) {
+    console.error("Error approving expense:", err);
+  }
 };
+
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -114,10 +149,14 @@ const approveExpense = (_id) => {
     }
   };
 
-  const filteredExpenses = expenses.filter((exp) => {
-    if (activeTab === "all") return true;
-    return exp.status.toLowerCase().replace(" ", "-") === activeTab;
-  });
+const filteredExpenses = expenses.filter((exp) => {
+  if (activeTab === "all") return true;
+
+  const normalizedStatus = exp.status.toLowerCase().replace(/\s+/g, "-");
+  return normalizedStatus === activeTab;
+});
+
+
 
   const totalAmount = filteredExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
 
@@ -172,7 +211,7 @@ const approveExpense = (_id) => {
             <div>
               <p className="text-slate-600 text-sm font-medium">Approved</p>
               <p className="text-2xl font-bold text-green-600 mt-1">
-                {expenses.filter((e) => e.status === "Approved").length}
+                {expenses.filter((e) => e.status?.toLowerCase() === "approved").length}
               </p>
             </div>
             <div className="bg-green-100 p-3 rounded-lg">
@@ -186,7 +225,7 @@ const approveExpense = (_id) => {
             <div>
               <p className="text-slate-600 text-sm font-medium">Total Amount</p>
               <p className="text-2xl font-bold text-slate-900 mt-1">
-                {totalAmount.toLocaleString()} rs
+                {totalAmount.toLocaleString()} INR
               </p>
             </div>
             <div className="bg-purple-100 p-3 rounded-lg">
@@ -205,6 +244,7 @@ const approveExpense = (_id) => {
               { key: "draft", label: "Draft" },
               { key: "waiting-approval", label: "Waiting Approval" },
               { key: "approved", label: "Approved" },
+              { key: "rejected", label: "Rejected" },
             ].map((tab) => (
               <button
                 key={tab.key}
@@ -380,7 +420,7 @@ const approveExpense = (_id) => {
                     onChange={(e) => setNewExpense({ ...newExpense, currency: e.target.value })}
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                   >
-                    <option value="rs">rs (Rupees)</option>
+                    <option value="rs">INR (Rupees)</option>
                     <option value="usd">USD</option>
                     <option value="eur">EUR</option>
                     <option value="gbp">GBP</option>
