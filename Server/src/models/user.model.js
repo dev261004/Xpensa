@@ -45,6 +45,10 @@ const userSchema = new Schema(
       ref: "User",
       default: null, // employee may or may not have manager
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
     isManagerApprover: {
       type: Boolean,
       default: false, // flag for manager approval in flow

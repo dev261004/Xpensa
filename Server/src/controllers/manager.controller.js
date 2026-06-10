@@ -1,138 +1,96 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 import { Expense } from "../models/expense.model.js";
 import { User } from "../models/user.model.js";
-import { Company } from "../models/company.model.js";
-import axios from "axios";
+import { applyApprovalAction } from "../services/approval.service.js";
+import { sendEmail } from "../utils/sendEmail.js";
+import { templates } from "../services/emailTemplates.js";
+import { getId } from "../utils/ids.js";
 
-const getManagerPendingExpenses = asyncHandler(async (req, res) => {
-  // 1️⃣ Find all employees under this manager
-  const employees = await User.find({ managerId: req.user._id }).select("_id name email");
-  const employeeIds = employees.map((emp) => emp._id);
+const populateApproval = (query) =>
+  query
+    .populate("employeeId", "name email")
+    .populate("companyId", "name currency")
+    .populate("currentApproverId", "name email role")
+    .populate("approvalSteps.approverId", "name email role")
+    .sort({ submittedAt: 1, createdAt: -1 });
 
-  if (employeeIds.length === 0) {
-    return res.status(200).json({
-      status: "success",
-      message: "No employees assigned to this manager",
-      data: [],
-    });
-  }
-
-  // 2️⃣ Find only those employees who have 'Processing' expenses
-  const expenses = await Expense.find({
-    employeeId: { $in: employeeIds },
-    status: "Processing",
-  })
-    .populate("employeeId", "name email managerId")
-    .sort({ createdAt: -1 });
-
-  // 3️⃣ Get list of employees who have at least one expense
-  const employeesWithExpenses = employees.filter((emp) =>
-    expenses.some((exp) => String(exp.employeeId._id) === String(emp._id))
-  );
-
-  // 4️⃣ Convert currency if needed
-  const companyCurrency = req.user.companyId?.currency || "USD";
-  const convertedExpenses = await Promise.all(
-    expenses.map(async (expense) => {
-    //   let convertedAmount = expense.amount;
-    //  // console.log("expense.currency",expense.currency);
-    //   if (expense.currency !== companyCurrency) {
-    //     try {
-    //       const response = await axios.get(
-    //         `https://api.exchangerate-api.com/v4/latest/${companyCurrency}`
-    //       );
-          
-    //        const rates = response.data.rates;
-    //      // console.log("rate of ${expense.currency} ",rates);
-    //       convertedAmount = expense.amount * (rates[expense.currency] || 1);
-    //     } catch (err) {
-    //       console.error("Currency conversion failed", err.message);
-    //     }
-    //   }
-    // --- inside expenses.map(async expense => { ... })
-let convertedAmount = Number(expense.amount); // keep same units as expense.amount
-
-if (expense.currency && companyCurrency && expense.currency !== companyCurrency) {
-  try {
-    // Use expense.currency as API base and multiply by rate->companyCurrency
-    const url = `https://api.exchangerate-api.com/v4/latest/${encodeURIComponent(expense.currency)}`;
-    const response = await axios.get(url, { timeout: 5000 });
-    const rates = response.data?.rates || {};
-    const rate = rates[companyCurrency];
-
-    if (rate && !isNaN(rate)) {
-      // expense.amount is major units -> multiply, then round to 2 decimals
-      convertedAmount = Number((Number(expense.amount) * Number(rate)).toFixed(2));
-    } else {
-      console.warn(`Conversion rate for ${expense.currency} -> ${companyCurrency} not found`, rates);
-      // keep convertedAmount as original amount (fallback)
-    }
-  } catch (err) {
-    console.error("Currency conversion failed", err.message);
-    // fallback: keep convertedAmount = expense.amount
-  }
-}
-
-
-      return {
-        _id: expense._id,
-        description: expense.description,
-        remarks: expense.remarks,
-        date: expense.date,
-        paidBy: expense.paidBy,
-        category: expense.category,
-        amount: expense.amount,
-        currency: expense.currency,
-        convertedAmount,
-        status: expense.status,
-        employee: {
-          id: expense.employeeId._id,
-          name: expense.employeeId.name,
-          email: expense.employeeId.email,
-        },
-      };
+const getManagerApprovals = asyncHandler(async (req, res) => {
+  const approvals = await populateApproval(
+    Expense.find({
+      companyId: getId(req.user.companyId),
+      currentApproverId: req.user._id,
+      status: "Waiting approval",
     })
   );
 
-  // 5️⃣ Send filtered result
-  return res.status(200).json({
-    status: "success",
-    message: "Pending expenses fetched successfully",
-    employeesWithExpenses,
-    data: convertedExpenses,
-  });
+  const teamExpenses = await Expense.find({
+    companyId: getId(req.user.companyId),
+    managerId: req.user._id,
+  })
+    .populate("employeeId", "name email")
+    .sort({ createdAt: -1 })
+    .limit(20);
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        approvals,
+        teamExpenses,
+        company: {
+          name: req.user.companyId?.name,
+          currency: req.user.companyId?.currency,
+        },
+      },
+      "Manager approvals fetched successfully"
+    )
+  );
 });
 
 const updateExpenseStatus = asyncHandler(async (req, res) => {
-  const { expenseId, action, remarks } = req.body;
-
-  if (!["Approved", "Rejected"].includes(action)) {
-    throw new ApiError(400, "Invalid action, must be Approved or Rejected");
-  }
-
-  const expense = await Expense.findById(expenseId);
+  const expense = await Expense.findOne({
+    _id: req.params.id,
+    companyId: getId(req.user.companyId),
+  }).populate("employeeId", "name email");
 
   if (!expense) {
     throw new ApiError(404, "Expense not found");
   }
 
-  // Check if manager is authorized
-  const employee = await User.findById(expense.employeeId);
-  if (!employee || String(employee.managerId) !== String(req.user._id)) {
-    throw new ApiError(403, "You are not authorized to approve/reject this expense");
+  const updated = await applyApprovalAction({
+    expense,
+    actor: req.user,
+    action: req.body.action,
+    comment: req.body.comment,
+  });
+
+  if (updated.status === "Approved" || updated.status === "Rejected") {
+    const emailContent = templates.expenseOutcome({
+      employeeName: expense.employeeId?.name || "Employee",
+      description: updated.description,
+      status: updated.status,
+      comment: req.body.comment,
+    });
+    await sendEmail({ to: expense.employeeId.email, ...emailContent });
+  } else if (updated.currentApproverId) {
+    const nextApprover = await User.findById(updated.currentApproverId).select("name email");
+    if (nextApprover) {
+      const emailContent = templates.approvalAssigned({
+        approverName: nextApprover.name,
+        employeeName: expense.employeeId?.name || "Employee",
+        description: updated.description,
+        amount: `${updated.convertedAmount} ${updated.convertedCurrency}`,
+      });
+      await sendEmail({ to: nextApprover.email, ...emailContent });
+    }
   }
 
-  expense.status = action;
-  expense.remarks = remarks || expense.remarks;
+  await updated.populate("approvalSteps.approverId", "name email role");
+  await updated.populate("currentApproverId", "name email role");
 
-  await expense.save();
-
-  return res.status(200).json({
-    status: "success",
-    message: `Expense ${action.toLowerCase()} successfully`,
-    data: expense,
-  });
+  return res.status(200).json(new ApiResponse(200, updated, `Expense ${req.body.action.toLowerCase()} successfully`));
 });
 
 const getManagerCompany = asyncHandler(async (req, res) => {
@@ -140,18 +98,16 @@ const getManagerCompany = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Manager has no associated company");
   }
 
-  const company = await Company.findById(req.user.companyId);
-  if (!company) {
-    throw new ApiError(404, "Company not found");
-  }
-
-  return res.status(200).json({
-    status: "success",
-    data: {
-      name: company.name,
-      currency: company.currency,
-    },
-  });
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        name: req.user.companyId.name,
+        currency: req.user.companyId.currency,
+      },
+      "Company fetched successfully"
+    )
+  );
 });
 
-export { getManagerPendingExpenses, updateExpenseStatus, getManagerCompany  };
+export { getManagerApprovals, updateExpenseStatus, getManagerCompany };

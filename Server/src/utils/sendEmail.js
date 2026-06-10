@@ -1,9 +1,10 @@
 import nodemailer from "nodemailer";
 
-export const sendEmail = async ({ to, subject, text }) => {
+export const sendEmail = async ({ to, subject, text, html }) => {
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT,
+    port: Number(process.env.SMTP_PORT || 587),
+    secure: Number(process.env.SMTP_PORT) === 465,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
@@ -11,9 +12,10 @@ export const sendEmail = async ({ to, subject, text }) => {
   });
 
   await transporter.sendMail({
-    from: `"Expense App" <${process.env.SMTP_USER}>`,
+    from: `"Xpensa" <${process.env.SMTP_USER}>`,
     to,
     subject,
     text,
+    html,
   });
 };

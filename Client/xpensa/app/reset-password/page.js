@@ -1,174 +1,56 @@
 "use client";
-import { useState } from "react";
+
 import { useRouter } from "next/navigation";
-import { Lock, Eye, EyeOff, ArrowRight, Shield } from "lucide-react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { ShieldCheck } from "lucide-react";
+import { apiFetch } from "../../lib/api";
+import { clearAuth, getStoredUser } from "../../lib/auth";
+import { Button, Card, Input } from "../../components/ui";
 
 export default function ResetPassword() {
   const router = useRouter();
-  const [form, setForm] = useState({ oldPassword: "", newPassword: "" });
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showOld, setShowOld] = useState(false);
-  const [showNew, setShowNew] = useState(false);
+  const { register, handleSubmit, setValue, formState: { isSubmitting } } = useForm({
+    defaultValues: { email: "", tempPassword: "", newPassword: "" },
+  });
 
-  const handleReset = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
-    setLoading(true);
+  useEffect(() => {
+    const user = getStoredUser();
+    if (user?.email) setValue("email", user.email);
+  }, [setValue]);
 
+  const onSubmit = async (values) => {
     try {
-      // 👇 get email from stored user in localStorage
-      const storedUser = JSON.parse(localStorage.getItem("user"));
-      if (!storedUser?.email) {
-        setError("User email not found. Please login again.");
-        setLoading(false);
-        return;
-      }
-
-      const res = await fetch("http://localhost:3010/api/v1/users/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: storedUser.email,
-          tempPassword: form.oldPassword, // old password field = temp password
-          newPassword: form.newPassword,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setSuccess("Password updated successfully!");
-        setTimeout(() => router.push("/admin/login"), 2000); // redirect to login
-      } else {
-        setError(data.message || "Failed to reset password");
-      }
-    } catch (err) {
-      console.error(err);
-      setError("Server error. Please try again.");
-    } finally {
-      setLoading(false);
+      await apiFetch("/users/reset-password", { method: "POST", body: values, auth: false });
+      clearAuth();
+      toast.success("Password updated. Please sign in again.");
+      router.push("/admin/login");
+    } catch (error) {
+      toast.error(error.message || "Password reset failed");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl shadow-lg mb-4">
-            <Shield className="w-8 h-8 text-white" />
+    <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10">
+      <Card className="w-full max-w-md p-6">
+        <div className="mb-7 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-teal-700 text-white">
+            <ShieldCheck className="h-6 w-6" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Reset Password
-          </h1>
-          <p className="text-gray-600">Update your password securely</p>
+          <h1 className="mt-4 text-2xl font-bold text-slate-950">Set a new password</h1>
+          <p className="mt-1 text-sm text-slate-500">Use the temporary password from your email or first login.</p>
         </div>
 
-        {/* Reset Password Form */}
-        <div className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-8">
-          <form onSubmit={handleReset} className="space-y-6">
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-2">
-                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                <p className="text-red-700 text-sm">{error}</p>
-              </div>
-            )}
-            {success && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center space-x-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <p className="text-green-700 text-sm">{success}</p>
-              </div>
-            )}
-
-            {/* Temporary Password */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                Temporary Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type={showOld ? "text" : "password"}
-                  placeholder="Enter your temporary password"
-                  className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white/50"
-                  value={form.oldPassword}
-                  onChange={(e) =>
-                    setForm({ ...form, oldPassword: e.target.value })
-                  }
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowOld(!showOld)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
-                  {showOld ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* New Password */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                New Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type={showNew ? "text" : "password"}
-                  placeholder="Enter your new password"
-                  className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 bg-white/50"
-                  value={form.newPassword}
-                  onChange={(e) =>
-                    setForm({ ...form, newPassword: e.target.value })
-                  }
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNew(!showNew)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
-                  {showNew ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 rounded-lg hover:from-orange-600 hover:to-red-600 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-              {loading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-              ) : (
-                <>
-                  <span className="font-medium">Update Password</span>
-                  <ArrowRight className="w-5 h-5" />
-                </>
-              )}
-            </button>
-          </form>
-        </div>
-
-        {/* Footer */}
-        <div className="text-center mt-6">
-          <button
-            onClick={() => router.back()}
-            className="text-sm text-gray-600 hover:text-orange-600 transition-colors">
-            Back to Dashboard
-          </button>
-        </div>
-      </div>
-    </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <Input label="Email" type="email" required {...register("email", { required: true })} />
+          <Input label="Temporary password" type="password" required {...register("tempPassword", { required: true })} />
+          <Input label="New password" type="password" required minLength={8} {...register("newPassword", { required: true, minLength: 8 })} />
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Updating..." : "Update password"}
+          </Button>
+        </form>
+      </Card>
+    </main>
   );
 }

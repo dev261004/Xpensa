@@ -1,178 +1,70 @@
 "use client";
-import { useState } from "react";
+
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Mail, Lock, User, ArrowRight } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { ArrowRight, Lock, Mail, ReceiptText } from "lucide-react";
+import { apiFetch } from "../../../lib/api";
+import { routeForRole, setAuth } from "../../../lib/auth";
+import { loginSchema } from "../../../lib/validators";
+import { Button, Card, Input } from "../../../components/ui";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({ resolver: zodResolver(loginSchema), defaultValues: { email: "", password: "" } });
 
-  // ✅ Handle Login Integration with XPens backend
-  // ✅ Handle Login Integration with XPens backend
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
+  const onSubmit = async (values) => {
     try {
-      const res = await fetch("http://localhost:3010/api/v1/users/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: form.email,
-          password: form.password,
-        }),
-      });
-
-      console.log("Response Status:", res.status);
-      const data = await res.json();
-      console.log("Response Data:", data);
-
-      // if (res.ok) {
-      //   // Save token in localStorage
-      //   const token = data.data.accessToken ;
-      //   const user = data.user || {};
-
-      if (res.ok) {
-        const user = data.user || {};
-        const token = data.data?.accessToken; // may be undefined
-
-        if (token) {
-          localStorage.setItem("token", token);
-          localStorage.setItem("user", JSON.stringify(user));
-
-          if (user.role === "Admin") {
-            router.push("/admin/dashboard");
-          } else if (user.role === "Manager") {
-            router.push("/manager/dashboard");
-          } else if (user.role === "Employee") {
-            router.push("/employee/dashboard");
-          } else {
-            router.push("/admin/dashboard");
-          }
-        } else {
-          setError("Login successful, but token missing.");
-        }
-      } else {
-        setError(data.message || "Invalid credentials");
-      }
-    } catch (err) {
-      console.error("Login Error:", err);
-      setError(
-        "Failed to connect to server. Please check backend URL or CORS."
-      );
-    } finally {
-      setLoading(false);
+      const data = await apiFetch("/users/login", { method: "POST", body: values, auth: false });
+      setAuth(data);
+      toast.success(data.tempPassword ? "Please update your temporary password." : "Welcome back.");
+      router.push(data.tempPassword ? "/reset-password" : routeForRole(data.user.role));
+    } catch (error) {
+      toast.error(error.message || "Login failed");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-blue-50 to-cyan-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-2xl shadow-lg mb-4">
-            <User className="w-8 h-8 text-white" />
+    <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10">
+      <Card className="w-full max-w-md p-6">
+        <div className="mb-7 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-teal-700 text-white">
+            <ReceiptText className="h-6 w-6" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome Back
-          </h1>
-          <p className="text-gray-600">Sign in to continue to XPens</p>
+          <h1 className="mt-4 text-2xl font-bold text-slate-950">Sign in to Xpensa</h1>
+          <p className="mt-1 text-sm text-slate-500">Use your admin, manager, or employee account.</p>
         </div>
 
-        {/* Login Form */}
-        <div className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-8">
-          <form onSubmit={handleLogin} className="space-y-6">
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center space-x-2">
-                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                <p className="text-red-700 text-sm">{error}</p>
-              </div>
-            )}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="relative">
+            <Mail className="pointer-events-none absolute left-3 top-9 h-4 w-4 text-slate-400" />
+            <Input label="Email" type="email" className="pl-10" error={errors.email?.message} {...register("email")} />
+          </div>
+          <div className="relative">
+            <Lock className="pointer-events-none absolute left-3 top-9 h-4 w-4 text-slate-400" />
+            <Input label="Password" type="password" className="pl-10" error={errors.password?.message} {...register("password")} />
+          </div>
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? "Signing in..." : "Sign in"}
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </form>
 
-            {/* Email Input */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white/50"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Password Input */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                  className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white/50"
-                  value={form.password}
-                  onChange={(e) =>
-                    setForm({ ...form, password: e.target.value })
-                  }
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors">
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Login Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-indigo-500 to-blue-500 text-white py-3 rounded-lg hover:from-indigo-600 hover:to-blue-600 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-              {loading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-              ) : (
-                <>
-                  <span className="font-medium">Sign In</span>
-                  <ArrowRight className="w-5 h-5" />
-                </>
-              )}
-            </button>
-
-            {/* Forgot Password */}
-            <button
-              type="button"
-              onClick={() => router.push("/admin/forgotpassword")}
-              className="w-full bg-white border-2 border-gray-300 text-gray-700 py-3 rounded-lg hover:border-indigo-400 hover:text-indigo-600 transition-all duration-200 flex items-center justify-center space-x-2 shadow-sm hover:shadow-md">
-              <span className="font-medium">Forgot Password</span>
-            </button>
-          </form>
+        <div className="mt-5 flex items-center justify-between text-sm">
+          <Link href="/admin/forgotpassword" className="font-semibold text-teal-700 hover:text-teal-900">
+            Forgot password?
+          </Link>
+          <Link href="/admin/register" className="font-semibold text-slate-600 hover:text-slate-950">
+            Create company
+          </Link>
         </div>
-
-        {/* Footer */}
-        <div className="text-center mt-6">
-          <p className="text-sm text-gray-500">
-            XPensa – Secure login powered by JWT authentication
-          </p>
-        </div>
-      </div>
-    </div>
+      </Card>
+    </main>
   );
 }

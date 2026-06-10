@@ -1,275 +1,287 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import axios from "axios";
-import { Check, X, Eye, Search, DollarSign, Clock } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { Check, CheckCircle2, Clock, Eye, History, Search, Users, WalletCards, X } from "lucide-react";
+import { apiFetch } from "../../../lib/api";
+import { useRequireRole } from "../../../lib/hooks";
+import { formatCurrency, formatDate } from "../../../lib/format";
+import {
+  AppShell,
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Modal,
+  StatCard,
+  StatusBadge,
+  Textarea,
+} from "../../../components/ui";
 
 export default function ManagerDashboard() {
+  const { ready } = useRequireRole("Manager");
+  const [active, setActive] = useState("approvals");
   const [approvals, setApprovals] = useState([]);
-  const [filter, setFilter] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [teamExpenses, setTeamExpenses] = useState([]);
+  const [company, setCompany] = useState({ currency: "USD" });
   const [loading, setLoading] = useState(true);
-  const [token, setToken] = useState(null);
-  const [companyCurrency, setCompanyCurrency] = useState("USD"); // 🟢 default
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState(null);
+  const [actionExpense, setActionExpense] = useState(null);
 
-  // ✅ Get token safely after client mount
-  useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    setToken(storedToken);
-  }, []);
+  const navItems = [
+    { key: "approvals", label: "Approval inbox", icon: CheckCircle2 },
+    { key: "team", label: "Team history", icon: History },
+  ];
 
-  // ✅ Fetch manager company info
-  useEffect(() => {
-    if (!token) return;
-
-    const fetchCompanyCurrency = async () => {
-      try {
-        const res = await axios.get("http://localhost:3010/api/v1/manager/company", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setCompanyCurrency(res.data.data.currency || "USD");
-      } catch (err) {
-        console.error("Error fetching company currency:", err);
-      }
-    };
-
-    fetchCompanyCurrency();
-  }, [token]);
-
-  // ✅ Fetch pending expenses once token is loaded
-  useEffect(() => {
-    if (!token) return;
-
-    const fetchExpenses = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get("http://localhost:3010/api/v1/manager/", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const data = response.data.data;
-        const formatted = data.map((item) => ({
-          id: item._id,
-          subject: item.description || "No subject",
-          owner: item.employee?.name || "Unknown",
-          category: item.category,
-          status: item.status,
-          amount: item.convertedAmount || item.amount,
-          currency: item.currency,
-          date: item.date?.split("T")[0],
-          description: item.remarks || item.description,
-        }));
-
-        setApprovals(formatted);
-      } catch (error) {
-        console.error("Error fetching manager expenses:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchExpenses();
-  }, [token]);
-
-  const handleAction = async (id, action) => {
+  const loadData = async () => {
     try {
-      await axios.post(
-        "http://localhost:3010/api/v1/manager/action",
-        { expenseId: id, action },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setApprovals((prev) =>
-        prev.map((item) =>
-          item.id === id ? { ...item, status: action } : item
-        )
-      );
-      setSelectedRequest(null);
+      setLoading(true);
+      const data = await apiFetch("/manager/approvals");
+      setApprovals(data.approvals || []);
+      setTeamExpenses(data.teamExpenses || []);
+      setCompany(data.company || { currency: "USD" });
     } catch (error) {
-      console.error(`Error updating expense (${action}):`, error);
-      alert(error.response?.data?.message || "Something went wrong");
+      toast.error(error.message || "Unable to load approvals");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleApprove = (id) => handleAction(id, "Approved");
-  const handleReject = (id) => handleAction(id, "Rejected");
+  useEffect(() => {
+    if (ready) loadData();
+  }, [ready]);
 
-  // ✅ Format amount based on company currency
-  // const formatAmount = (amount) => {
-  //   return new Intl.NumberFormat("en-US", {
-  //     style: "currency",
-  //     currency: companyCurrency || "USD",
-  //   }).format(amount / 100);
-  // };
-const formatAmount = (amount, currency) => {
-  const num = Number(amount) || 0;
-  return new Intl.NumberFormat("en-IN", { // use en-IN or en-US depending on preference
-    style: "currency",
-    currency: currency || companyCurrency || "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(num);
-};
-  const filteredApprovals = approvals.filter((item) => {
-    const matchesFilter =
-      filter === "all" || item.status.toLowerCase() === filter;
-    const matchesSearch =
-      item.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.owner.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.category.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesFilter && matchesSearch;
-  });
+  const filteredApprovals = useMemo(() => {
+    const term = search.toLowerCase();
+    return approvals.filter((expense) => {
+      return (
+        expense.description?.toLowerCase().includes(term) ||
+        expense.category?.toLowerCase().includes(term) ||
+        expense.employeeId?.name?.toLowerCase().includes(term)
+      );
+    });
+  }, [approvals, search]);
 
-  const stats = {
-    pending: approvals.filter((a) => a.status === "Processing" || a.status === "Pending").length,
-    approved: approvals.filter((a) => a.status === "Approved").length,
-    rejected: approvals.filter((a) => a.status === "Rejected").length,
-    total: approvals.reduce(
-      (sum, a) =>
-        sum + (a.status === "Processing" || a.status === "Pending" ? a.amount : 0),
-      0
-    ),
-  };
+  const stats = useMemo(
+    () => ({
+      pending: approvals.length,
+      total: approvals.reduce((sum, expense) => sum + Number(expense.convertedAmount || expense.amount || 0), 0),
+      team: teamExpenses.length,
+      approved: teamExpenses.filter((expense) => expense.status === "Approved").length,
+    }),
+    [approvals, teamExpenses]
+  );
 
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center text-slate-600">
-        Loading manager expenses...
-      </div>
-    );
-  }
+  if (!ready) return <div className="flex min-h-screen items-center justify-center bg-slate-100 text-slate-600">Loading workspace...</div>;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">Manager Dashboard</h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Review and approve employee expense requests
-            </p>
+    <AppShell
+      role="Manager"
+      title="Manager dashboard"
+      subtitle="Review assigned approvals and monitor team expense history."
+      active={active}
+      setActive={setActive}
+      navItems={navItems}
+    >
+      <div className="mb-6 grid gap-4 md:grid-cols-4">
+        <StatCard icon={Clock} label="Pending approvals" value={stats.pending} tone="amber" />
+        <StatCard icon={WalletCards} label={`Pending amount (${company.currency || "USD"})`} value={formatCurrency(stats.total, company.currency || "USD")} tone="teal" />
+        <StatCard icon={Users} label="Team requests" value={stats.team} tone="blue" />
+        <StatCard icon={CheckCircle2} label="Approved team" value={stats.approved} tone="green" />
+      </div>
+
+      {active === "approvals" ? (
+        <Card>
+          <div className="flex flex-col gap-3 border-b border-slate-200 p-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="font-bold text-slate-950">Approval inbox</h2>
+              <p className="text-sm text-slate-500">Only expenses currently assigned to you appear here.</p>
+            </div>
+            <div className="relative w-full md:max-w-sm">
+              <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Search expense, employee, category"
+                className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-10 pr-3 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+              />
+            </div>
+          </div>
+          <div className="p-4">
+            {loading ? <p className="text-sm text-slate-500">Loading approvals...</p> : null}
+            {!loading && !filteredApprovals.length ? <EmptyState title="No approvals waiting" description="When an expense reaches your step, it will appear here." /> : null}
+            <div className="space-y-3">
+              {filteredApprovals.map((expense) => (
+                <ApprovalCard key={expense._id} expense={expense} onView={setSelected} onAction={setActionExpense} />
+              ))}
+            </div>
+          </div>
+        </Card>
+      ) : (
+        <TeamHistory expenses={teamExpenses} loading={loading} />
+      )}
+
+      {selected ? <ExpenseDetail expense={selected} onClose={() => setSelected(null)} /> : null}
+      {actionExpense ? (
+        <ActionModal
+          expense={actionExpense.expense}
+          action={actionExpense.action}
+          onClose={() => setActionExpense(null)}
+          onSaved={() => {
+            setActionExpense(null);
+            loadData();
+          }}
+        />
+      ) : null}
+    </AppShell>
+  );
+}
+
+function ApprovalCard({ expense, onView, onAction }) {
+  return (
+    <article className="rounded-lg border border-slate-200 bg-white p-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-bold text-slate-950">{expense.description}</h3>
+            <StatusBadge status={expense.status} />
+            <Badge tone="blue">{expense.category}</Badge>
+          </div>
+          <div className="mt-3 grid gap-3 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-4">
+            <span>{expense.employeeId?.name || "Employee"}</span>
+            <span>{formatDate(expense.date)}</span>
+            <span>{formatCurrency(expense.amount, expense.currency)}</span>
+            <span className="font-semibold text-slate-900">{formatCurrency(expense.convertedAmount, expense.convertedCurrency)}</span>
           </div>
         </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          {[
-            { label: "Pending", value: stats.pending, color: "amber", icon: Clock },
-            { label: "Approved", value: stats.approved, color: "green", icon: Check },
-            { label: "Rejected", value: stats.rejected, color: "red", icon: X },
-            {
-              label: `Total Pending (${companyCurrency})`, // 🟢 Dynamic label
-              value: formatAmount(stats.total),
-              color: "blue",
-              icon: DollarSign,
-            },
-          ].map((stat, idx) => {
-            const Icon = stat.icon;
-            return (
-              <div
-                key={idx}
-                className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-shadow">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">{stat.label}</p>
-                    <p className={`text-3xl font-bold text-${stat.color}-600`}>
-                      {stat.value}
-                    </p>
-                  </div>
-                  <div
-                    className={`w-12 h-12 bg-${stat.color}-100 rounded-lg flex items-center justify-center`}>
-                    <Icon className={`w-6 h-6 text-${stat.color}-600`} />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-           </div>
-
-        {/* Search + Filters */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6 flex gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search by subject, owner, or category..."
-              className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
-
-        {/* Expenses Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Subject</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Owner</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Category</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Date</th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-slate-700">Amount</th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-slate-700">Status</th>
-                  <th className="px-6 py-4 text-center text-sm font-semibold text-slate-700">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredApprovals.map((item) => (
-                  <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="px-6 py-4 font-medium text-slate-800">{item.subject}</td>
-                    <td className="px-6 py-4 text-slate-700">{item.owner}</td>
-                    <td className="px-6 py-4">{item.category}</td>
-                    <td className="px-6 py-4 text-slate-600">{item.date}</td>
-                    <td className="px-6 py-4 text-right font-semibold text-slate-800">
-                      {formatAmount(item.amount, item.companyCurrency)}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          item.status === "Approved"
-                            ? "bg-green-100 text-green-700"
-                            : item.status === "Rejected"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-amber-100 text-amber-700"
-                        }`}>
-                        {item.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      {item.status === "Processing" || item.status === "Pending" ? (
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => handleApprove(item.id)}
-                            className="p-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
-                            <Check className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleReject(item.id)}
-                            className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg">
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-slate-500 text-sm">—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {filteredApprovals.length === 0 && (
-            <div className="text-center py-12 text-slate-500">No expense requests found</div>
-          )}
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Button variant="secondary" onClick={() => onView(expense)}>
+            <Eye className="h-4 w-4" />
+            Details
+          </Button>
+          <Button variant="success" onClick={() => onAction({ expense, action: "Approved" })}>
+            <Check className="h-4 w-4" />
+            Approve
+          </Button>
+          <Button variant="danger" onClick={() => onAction({ expense, action: "Rejected" })}>
+            <X className="h-4 w-4" />
+            Reject
+          </Button>
         </div>
       </div>
+    </article>
+  );
+}
+
+function TeamHistory({ expenses, loading }) {
+  return (
+    <Card>
+      <div className="border-b border-slate-200 p-4">
+        <h2 className="font-bold text-slate-950">Team expense history</h2>
+        <p className="text-sm text-slate-500">Recent requests from employees assigned to you.</p>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[760px] text-left text-sm">
+          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+            <tr>
+              <th className="px-4 py-3">Expense</th>
+              <th className="px-4 py-3">Employee</th>
+              <th className="px-4 py-3">Date</th>
+              <th className="px-4 py-3">Amount</th>
+              <th className="px-4 py-3">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {expenses.map((expense) => (
+              <tr key={expense._id} className="hover:bg-slate-50">
+                <td className="px-4 py-3 font-semibold text-slate-900">{expense.description}</td>
+                <td className="px-4 py-3 text-slate-600">{expense.employeeId?.name || "-"}</td>
+                <td className="px-4 py-3 text-slate-600">{formatDate(expense.date)}</td>
+                <td className="px-4 py-3">{formatCurrency(expense.convertedAmount || expense.amount, expense.convertedCurrency || expense.currency)}</td>
+                <td className="px-4 py-3"><StatusBadge status={expense.status} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {!loading && !expenses.length ? <div className="p-4"><EmptyState title="No team history yet" description="Team expenses will appear after employees create requests." /></div> : null}
+    </Card>
+  );
+}
+
+function ExpenseDetail({ expense, onClose }) {
+  return (
+    <Modal title={expense.description} description={`${expense.employeeId?.name || "Employee"} · ${expense.category}`} onClose={onClose}>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Detail label="Original amount" value={formatCurrency(expense.amount, expense.currency)} />
+        <Detail label="Company amount" value={formatCurrency(expense.convertedAmount, expense.convertedCurrency)} />
+        <Detail label="Expense date" value={formatDate(expense.date)} />
+        <Detail label="Paid by" value={expense.paidBy || expense.employeeId?.name || "-"} />
+      </div>
+      {expense.remarks ? <p className="mt-4 rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{expense.remarks}</p> : null}
+      <div className="mt-5">
+        <h3 className="mb-3 text-sm font-bold text-slate-900">Approval timeline</h3>
+        <div className="space-y-2">
+          {(expense.approvalSteps || []).map((step, index) => (
+            <div key={`${step._id || index}`} className="rounded-lg border border-slate-200 p-3 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-semibold text-slate-900">Step {index + 1}: {step.approverName || step.approverId?.name || "Approver"}</p>
+                <Badge tone={step.status === "Approved" ? "green" : step.status === "Rejected" ? "red" : "amber"}>{step.status}</Badge>
+              </div>
+              {step.comment ? <p className="mt-2 text-slate-600">{step.comment}</p> : null}
+            </div>
+          ))}
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function Detail({ label, value }) {
+  return (
+    <div className="rounded-lg border border-slate-200 p-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 font-bold text-slate-950">{value || "-"}</p>
     </div>
+  );
+}
+
+function ActionModal({ expense, action, onClose, onSaved }) {
+  const [comment, setComment] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const submit = async () => {
+    try {
+      setSaving(true);
+      await apiFetch(`/manager/approvals/${expense._id}/action`, {
+        method: "POST",
+        body: { action, comment },
+      });
+      toast.success(`Expense ${action.toLowerCase()}`);
+      onSaved();
+    } catch (error) {
+      toast.error(error.message || "Unable to update expense");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal
+      title={`${action === "Approved" ? "Approve" : "Reject"} expense`}
+      description={expense.description}
+      onClose={onClose}
+      footer={
+        <div className="flex justify-end gap-3">
+          <Button variant="secondary" onClick={onClose}>Cancel</Button>
+          <Button variant={action === "Approved" ? "success" : "danger"} onClick={submit} disabled={saving || comment.length < 2}>
+            {saving ? "Saving..." : action}
+          </Button>
+        </div>
+      }
+    >
+      <Textarea label="Comment" rows={4} value={comment} onChange={(event) => setComment(event.target.value)} />
+    </Modal>
   );
 }

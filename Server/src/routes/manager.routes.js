@@ -1,12 +1,18 @@
 import express from "express";
+import { getManagerApprovals, updateExpenseStatus, getManagerCompany } from "../controllers/manager.controller.js";
 import { verifyJWT } from "../middlewares/auth.js";
-import { getManagerPendingExpenses, updateExpenseStatus,getManagerCompany } from "../controllers/manager.controller.js";
+import { requireCompany, requireRole } from "../middlewares/authorize.js";
+import { validate } from "../middlewares/validate.js";
+import { expenseActionSchema } from "../validators/expense.schemas.js";
 
 const router = express.Router();
 
-// Manager dashboard endpoints
-router.get("/", verifyJWT, getManagerPendingExpenses); // fetch pending expenses
-router.post("/action", verifyJWT, updateExpenseStatus); // approve/reject expense
-router.get("/company", verifyJWT,getManagerCompany);
+router.use(verifyJWT, requireRole("Manager", "Admin"), requireCompany);
+
+router.get("/approvals", getManagerApprovals);
+router.post("/approvals/:id/action", validate(expenseActionSchema), updateExpenseStatus);
+router.get("/company", getManagerCompany);
+
+router.get("/", getManagerApprovals);
 
 export default router;

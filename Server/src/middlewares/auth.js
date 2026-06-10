@@ -20,9 +20,9 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
 
     const user = await User.findById(payload._id)
       .select("-password -refreshToken")
-      .populate("companyId", "name country currency");
+      .populate("companyId", "name country currency settings");
 
-    if (!user) throw new ApiError(401, "Invalid access token");
+    if (!user || user.isActive === false) throw new ApiError(401, "Invalid access token");
 
     req.user = user;
     next();
