@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Building2, CheckCircle2 } from "lucide-react";
+import { Building2, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { apiFetch } from "../../../lib/api";
 import { registerSchema } from "../../../lib/validators";
 import { Button, Card, Input, Select } from "../../../components/ui";
@@ -14,6 +14,8 @@ import { Button, Card, Input, Select } from "../../../components/ui";
 export default function RegisterPage() {
   const router = useRouter();
   const [countries, setCountries] = useState([]);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const {
     register,
     watch,
@@ -67,8 +69,42 @@ export default function RegisterPage() {
               </option>
             ))}
           </Select>
-          <Input label="Password" type="password" error={errors.password?.message} {...register("password")} />
-          <Input label="Confirm password" type="password" error={errors.confirmPassword?.message} {...register("confirmPassword")} />
+          <div className="relative">
+            <Input
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              className="pr-10"
+              error={errors.password?.message}
+              {...register("password")}
+            />
+            <button
+              type="button"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              title={showPassword ? "Hide password" : "Show password"}
+              onClick={() => setShowPassword((value) => !value)}
+              className="absolute right-3 top-9 rounded-md p-0.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+          <div className="relative">
+            <Input
+              label="Confirm password"
+              type={showConfirmPassword ? "text" : "password"}
+              className="pr-10"
+              error={errors.confirmPassword?.message}
+              {...register("confirmPassword")}
+            />
+            <button
+              type="button"
+              aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+              title={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+              onClick={() => setShowConfirmPassword((value) => !value)}
+              className="absolute right-3 top-9 rounded-md p-0.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            >
+              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
 
           {selectedCountry ? (
             <div className="md:col-span-2 rounded-lg border border-teal-200 bg-teal-50 p-3 text-sm text-teal-900">

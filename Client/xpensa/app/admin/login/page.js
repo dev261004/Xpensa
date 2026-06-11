@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { ArrowRight, Lock, Mail, ReceiptText } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Lock, Mail, ReceiptText } from "lucide-react";
 import { apiFetch } from "../../../lib/api";
 import { routeForRole, setAuth } from "../../../lib/auth";
 import { loginSchema } from "../../../lib/validators";
@@ -13,6 +14,7 @@ import { Button, Card, Input } from "../../../components/ui";
 
 export default function LoginPage() {
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
   const {
     register,
     handleSubmit,
@@ -48,7 +50,22 @@ export default function LoginPage() {
           </div>
           <div className="relative">
             <Lock className="pointer-events-none absolute left-3 top-9 h-4 w-4 text-slate-400" />
-            <Input label="Password" type="password" className="pl-10" error={errors.password?.message} {...register("password")} />
+            <Input
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              className="pl-10 pr-10"
+              error={errors.password?.message}
+              {...register("password")}
+            />
+            <button
+              type="button"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              title={showPassword ? "Hide password" : "Show password"}
+              onClick={() => setShowPassword((value) => !value)}
+              className="absolute right-3 top-9 rounded-md p-0.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
           </div>
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "Signing in..." : "Sign in"}
