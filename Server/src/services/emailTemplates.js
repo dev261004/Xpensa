@@ -49,6 +49,35 @@ const baseTemplate = ({ title, preview, body }) => {
 const paragraph = (text) =>
   `<p style="font-size:15px;line-height:1.7;margin:0 0 16px;color:#334155;">${escapeHtml(text)}</p>`;
 
+const appUrl =
+  process.env.FRONTEND_URL ||
+  process.env.CLIENT_URL ||
+  (process.env.CORS_ORIGIN && process.env.CORS_ORIGIN !== "*" ? process.env.CORS_ORIGIN : "http://localhost:8000");
+
+const actionButton = (label, href) =>
+  `<table role="presentation" cellspacing="0" cellpadding="0" style="margin:20px 0 4px;">
+    <tr>
+      <td style="border-radius:8px;background:#0f766e;">
+        <a href="${escapeHtml(href)}" style="display:inline-block;padding:12px 18px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;border-radius:8px;">${escapeHtml(label)}</a>
+      </td>
+    </tr>
+  </table>`;
+
+const credentialBlock = (label, value) =>
+  `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid #dbe6f3;border-radius:10px;background:#f8fafc;margin:12px 0;">
+    <tr>
+      <td style="padding:12px 14px 4px;color:#64748b;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;">${escapeHtml(label)}</td>
+      <td align="right" style="padding:12px 14px 4px;">
+        <span style="display:inline-block;border:1px solid #99f6e4;background:#ccfbf1;color:#0f766e;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:700;">Copy this value</span>
+      </td>
+    </tr>
+    <tr>
+      <td colspan="2" style="padding:4px 14px 14px;">
+        <div style="font-family:Consolas,Menlo,Monaco,monospace;font-size:16px;line-height:1.5;color:#0f172a;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;padding:11px 12px;word-break:break-all;-webkit-user-select:all;user-select:all;">${escapeHtml(value)}</div>
+      </td>
+    </tr>
+  </table>`;
+
 const pill = (label, value) =>
   `<tr><td style="padding:10px 0;color:#64748b;font-size:13px;">${escapeHtml(label)}</td><td style="padding:10px 0;text-align:right;color:#111827;font-weight:700;">${escapeHtml(value)}</td></tr>`;
 
@@ -64,7 +93,10 @@ export const templates = {
       preview: "Your temporary credentials are inside.",
       body:
         paragraph(`Hello ${name}, your Xpensa account has been created.`) +
-        detailsTable([pill("Email", email), pill("Temporary password", password)]) +
+        paragraph("Select the value box below and copy it into the sign-in form.") +
+        credentialBlock("Email", email) +
+        credentialBlock("Temporary password", password) +
+        actionButton("Open Xpensa login", `${appUrl}/admin/login`) +
         paragraph("Please sign in and change this password immediately."),
     }),
   }),
@@ -76,7 +108,9 @@ export const templates = {
       preview: "Use this password once, then update it.",
       body:
         paragraph(`Hello ${name}, we generated a temporary password for your account.`) +
-        detailsTable([pill("Temporary password", password)]) +
+        paragraph("Select the password box below and copy it into the reset screen.") +
+        credentialBlock("Temporary password", password) +
+        actionButton("Open password reset", `${appUrl}/reset-password`) +
         paragraph("Use it once and set a new password from the reset screen."),
     }),
   }),
