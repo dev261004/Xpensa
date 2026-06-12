@@ -45,19 +45,33 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4 py-10">
-      <Card className="w-full max-w-2xl p-6">
-        <div className="mb-7 flex items-start gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-teal-700 text-white">
+    <main className="auth-surface flex min-h-screen items-center justify-center px-4 py-10">
+      <Card className="grid w-full max-w-6xl overflow-hidden p-0 lg:grid-cols-[360px_1fr]">
+        <section className="bg-slate-950 p-7 text-white">
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-teal-400 text-slate-950">
             <Building2 className="h-6 w-6" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-950">Create your company workspace</h1>
+          <h1 className="mt-8 text-3xl font-black tracking-normal">Create your workspace</h1>
+          <p className="mt-4 text-sm leading-6 text-slate-300">Set up the company currency, invite approvers, and start with a clean reimbursement flow.</p>
+          <div className="mt-8 space-y-3">
+            <div className="rounded-lg border border-white/10 bg-white/10 p-4">
+              <p className="text-2xl font-black">3 roles</p>
+              <p className="text-xs font-semibold text-slate-300">Admin, Manager, Employee</p>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-white/10 p-4">
+              <p className="text-2xl font-black">Live rules</p>
+              <p className="text-xs font-semibold text-slate-300">Sequential and conditional approvals</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="p-6 sm:p-8">
+          <div className="mb-7">
+            <h2 className="text-2xl font-black text-slate-950">Company details</h2>
             <p className="mt-1 text-sm text-slate-500">The selected country sets your company currency automatically.</p>
           </div>
-        </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 md:grid-cols-2">
+          <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 md:grid-cols-2">
           <Input label="Admin name" error={errors.name?.message} {...register("name")} />
           <Input label="Company name" error={errors.companyName?.message} {...register("companyName")} />
           <Input label="Email" type="email" error={errors.email?.message} {...register("email")} />
@@ -82,7 +96,7 @@ export default function RegisterPage() {
               aria-label={showPassword ? "Hide password" : "Show password"}
               title={showPassword ? "Hide password" : "Show password"}
               onClick={() => setShowPassword((value) => !value)}
-              className="absolute right-3 top-9 rounded-md p-0.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              className="absolute right-3 top-10 rounded-md p-0.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -100,7 +114,7 @@ export default function RegisterPage() {
               aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
               title={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
               onClick={() => setShowConfirmPassword((value) => !value)}
-              className="absolute right-3 top-9 rounded-md p-0.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              className="absolute right-3 top-10 rounded-md p-0.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
             >
               {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -121,7 +135,8 @@ export default function RegisterPage() {
               {isSubmitting ? "Creating..." : "Create workspace"}
             </Button>
           </div>
-        </form>
+          </form>
+        </section>
       </Card>
     </main>
   );

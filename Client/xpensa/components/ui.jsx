@@ -7,17 +7,17 @@ import { clearAuth, getStoredUser } from "../lib/auth";
 
 export function Button({ children, variant = "primary", className = "", type = "button", ...props }) {
   const variants = {
-    primary: "bg-teal-700 text-white hover:bg-teal-800 border-teal-700",
-    secondary: "bg-white text-slate-700 hover:bg-slate-50 border-slate-300",
-    danger: "bg-red-600 text-white hover:bg-red-700 border-red-600",
-    ghost: "bg-transparent text-slate-700 hover:bg-slate-100 border-transparent",
-    success: "bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-600",
+    primary: "border-teal-700 bg-teal-700 text-white shadow-sm shadow-teal-900/20 hover:bg-teal-800",
+    secondary: "border-slate-200 bg-white text-slate-700 shadow-sm hover:border-slate-300 hover:bg-slate-50",
+    danger: "border-red-600 bg-red-600 text-white shadow-sm shadow-red-900/20 hover:bg-red-700",
+    ghost: "border-transparent bg-transparent text-slate-700 hover:bg-slate-100",
+    success: "border-emerald-600 bg-emerald-600 text-white shadow-sm shadow-emerald-900/20 hover:bg-emerald-700",
   };
 
   return (
     <button
       type={type}
-      className={`inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${variants[variant]} ${className}`}
+      className={`inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold transition duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${variants[variant]} ${className}`}
       {...props}
     >
       {children}
@@ -30,7 +30,7 @@ export function Input({ label, error, className = "", ...props }) {
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium text-slate-700">{label}</span>
       <input
-        className={`w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100 ${className}`}
+        className={`w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-3 focus:ring-teal-100 ${className}`}
         {...props}
       />
       {error ? <span className="mt-1 block text-xs text-red-600">{error}</span> : null}
@@ -43,7 +43,7 @@ export function Select({ label, error, children, className = "", ...props }) {
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium text-slate-700">{label}</span>
       <select
-        className={`w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100 ${className}`}
+        className={`w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition focus:border-teal-600 focus:ring-3 focus:ring-teal-100 ${className}`}
         {...props}
       >
         {children}
@@ -58,7 +58,7 @@ export function Textarea({ label, error, className = "", ...props }) {
     <label className="block">
       <span className="mb-1.5 block text-sm font-medium text-slate-700">{label}</span>
       <textarea
-        className={`w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-100 ${className}`}
+        className={`w-full resize-none rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:ring-3 focus:ring-teal-100 ${className}`}
         {...props}
       />
       {error ? <span className="mt-1 block text-xs text-red-600">{error}</span> : null}
@@ -67,7 +67,7 @@ export function Textarea({ label, error, className = "", ...props }) {
 }
 
 export function Card({ children, className = "" }) {
-  return <section className={`rounded-lg border border-slate-200 bg-white shadow-sm ${className}`}>{children}</section>;
+  return <section className={`rounded-lg border border-slate-200/80 bg-white shadow-[0_14px_40px_rgba(15,23,42,0.06)] ${className}`}>{children}</section>;
 }
 
 export function StatCard({ icon: Icon, label, value, tone = "slate" }) {
@@ -81,13 +81,14 @@ export function StatCard({ icon: Icon, label, value, tone = "slate" }) {
   };
 
   return (
-    <Card className="p-4">
+    <Card className="group overflow-hidden p-4">
+      <div className={`mb-4 h-1 w-12 rounded-full ${tones[tone] || tones.slate}`} />
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-slate-500">{label}</p>
           <p className="mt-1 text-2xl font-bold text-slate-950">{value}</p>
         </div>
-        <div className={`rounded-lg p-2.5 ${tones[tone] || tones.slate}`}>
+        <div className={`rounded-lg p-2.5 transition group-hover:scale-105 ${tones[tone] || tones.slate}`}>
           <Icon className="h-5 w-5" />
         </div>
       </div>
@@ -115,8 +116,10 @@ export function StatusBadge({ status }) {
 
 export function EmptyState({ icon: Icon = ReceiptText, title, description, action }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
-      <Icon className="h-10 w-10 text-slate-400" />
+    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-inner">
+      <div className="rounded-lg bg-slate-100 p-3">
+        <Icon className="h-8 w-8 text-slate-500" />
+      </div>
       <h3 className="mt-4 text-base font-semibold text-slate-900">{title}</h3>
       {description ? <p className="mt-1 max-w-md text-sm text-slate-500">{description}</p> : null}
       {action ? <div className="mt-5">{action}</div> : null}
@@ -126,9 +129,9 @@ export function EmptyState({ icon: Icon = ReceiptText, title, description, actio
 
 export function Modal({ title, description, children, onClose, footer }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
-      <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-xl">
-        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+      <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-lg border border-white/30 bg-white shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-slate-50/80 px-5 py-4">
           <div>
             <h2 className="text-lg font-semibold text-slate-950">{title}</h2>
             {description ? <p className="mt-1 text-sm text-slate-500">{description}</p> : null}
@@ -157,11 +160,11 @@ export function AppShell({ role, title, subtitle, active, setActive, navItems, c
   };
 
   return (
-    <div className="min-h-screen bg-slate-100">
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <div className="app-surface min-h-screen">
+      <header className="sticky top-0 z-30 border-b border-white/70 bg-white/85 shadow-sm backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-teal-700 text-white">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-950 text-teal-300 shadow-sm">
               <RoleIcon className="h-5 w-5" />
             </div>
             <div>
@@ -170,7 +173,7 @@ export function AppShell({ role, title, subtitle, active, setActive, navItems, c
             </div>
           </Link>
           <div className="hidden items-center gap-3 sm:flex">
-            <div className="text-right">
+            <div className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-right shadow-sm">
               <p className="text-sm font-semibold text-slate-900">{user?.name || role}</p>
               <p className="text-xs text-slate-500">{user?.companyId?.name || pathname}</p>
             </div>
@@ -182,9 +185,9 @@ export function AppShell({ role, title, subtitle, active, setActive, navItems, c
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[240px_1fr] lg:px-8">
-        <aside className="rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
-          <div className="mb-2 flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-500 lg:hidden">
+      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[248px_1fr] lg:px-8">
+        <aside className="rounded-lg border border-slate-900/80 bg-slate-950 p-2 shadow-[0_18px_45px_rgba(15,23,42,0.18)]">
+          <div className="mb-2 flex items-center gap-2 px-3 py-2 text-sm font-semibold text-slate-300 lg:hidden">
             <Menu className="h-4 w-4" />
             Navigation
           </div>
@@ -197,7 +200,7 @@ export function AppShell({ role, title, subtitle, active, setActive, navItems, c
                   key={item.key}
                   onClick={() => setActive(item.key)}
                   className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition ${
-                    selected ? "bg-teal-50 text-teal-800" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                    selected ? "bg-teal-400 text-slate-950 shadow-sm" : "text-slate-300 hover:bg-white/10 hover:text-white"
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -209,9 +212,9 @@ export function AppShell({ role, title, subtitle, active, setActive, navItems, c
         </aside>
 
         <main className="min-w-0">
-          <div className="mb-6">
+          <div className="mb-6 rounded-lg border border-white/70 bg-white/75 px-5 py-4 shadow-sm backdrop-blur">
             <h1 className="text-2xl font-bold text-slate-950">{title}</h1>
-            <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+            <p className="mt-1 text-sm text-slate-600">{subtitle}</p>
           </div>
           {children}
         </main>

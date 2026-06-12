@@ -14,7 +14,7 @@ html {
 
 body {
   margin: 0;
-  background: #f1f5f9;
+  background: #eef3f8;
   color: #0f172a;
 }
 
@@ -27,4 +27,25 @@ textarea {
 
 table {
   border-collapse: collapse;
+}
+
+.app-surface {
+  background:
+    linear-gradient(135deg, rgba(241, 245, 249, 0.96), rgba(226, 232, 240, 0.88)),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.045) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+  background-size: auto, 34px 34px, 34px 34px;
+}
+
+.auth-surface {
+  background:
+    linear-gradient(135deg, #0f172a 0%, #123239 42%, #f1f5f9 42%, #eef3f8 100%);
+}
+
+.hero-product-surface {
+  background:
+    linear-gradient(135deg, rgba(8, 13, 28, 0.94), rgba(15, 23, 42, 0.78)),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: auto, 42px 42px, 42px 42px;
 }
