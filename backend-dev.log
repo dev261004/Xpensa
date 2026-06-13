@@ -1,0 +1,37 @@
+
+> server@1.0.0 dev
+> nodemon -r dotenv/config --experimental-json-modules src/index.js
+
+[33m[nodemon] 3.1.9[39m
+[33m[nodemon] to restart at any time, enter `rs`[39m
+[33m[nodemon] watching path(s): *.*[39m
+[33m[nodemon] watching extensions: js,mjs,cjs,json[39m
+[32m[nodemon] starting `node -r dotenv/config --experimental-json-modules src/index.js`[39m
+[dotenv@17.2.3] injecting env (0) from .env -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+
+ MONGODB CONNECTED !! DB HOST: 127.0.0.1
+Server is running at port :3010
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node -r dotenv/config --experimental-json-modules src/index.js`[39m
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  override existing env vars with { override: true }
+
+ MONGODB CONNECTED !! DB HOST: 127.0.0.1
+Server is running at port :3010
+TypeError: Cannot set property query of #<IncomingMessage> which has only a getter
+    at file:///D:/Xpensa/Server/src/middlewares/validate.js:20:15
+    at Layer.handleRequest (D:\Xpensa\Server\node_modules\router\lib\layer.js:152:17)
+    at next (D:\Xpensa\Server\node_modules\router\lib\route.js:157:13)
+    at Route.dispatch (D:\Xpensa\Server\node_modules\router\lib\route.js:117:3)
+    at handle (D:\Xpensa\Server\node_modules\router\index.js:435:11)
+    at Layer.handleRequest (D:\Xpensa\Server\node_modules\router\lib\layer.js:152:17)
+    at D:\Xpensa\Server\node_modules\router\index.js:295:15
+    at processParams (D:\Xpensa\Server\node_modules\router\index.js:582:12)
+    at next (D:\Xpensa\Server\node_modules\router\index.js:291:5)
+    at router.handle (D:\Xpensa\Server\node_modules\router\index.js:186:3)
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node -r dotenv/config --experimental-json-modules src/index.js`[39m
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+
+ MONGODB CONNECTED !! DB HOST: 127.0.0.1
+Server is running at port :3010
