@@ -30,8 +30,8 @@ export default function ManagerDashboard() {
   const [actionExpense, setActionExpense] = useState(null);
 
   const navItems = [
-    { key: "approvals", label: "Approval inbox", icon: CheckCircle2 },
-    { key: "team", label: "Team history", icon: History },
+    { key: "approvals", label: "Approval Inbox", icon: CheckCircle2 },
+    { key: "team", label: "Team History", icon: History },
   ];
 
   const loadData = async () => {
@@ -73,54 +73,70 @@ export default function ManagerDashboard() {
     [approvals, teamExpenses]
   );
 
-  if (!ready) return <div className="flex min-h-screen items-center justify-center bg-slate-100 text-slate-600">Loading workspace...</div>;
+  if (!ready) return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-900">
+      <div className="flex flex-col items-center gap-4">
+        <div className="h-12 w-12 rounded-full border-4 border-teal-500/20 border-t-teal-500 animate-spin"></div>
+        <p className="text-sm font-semibold text-slate-400 animate-pulse">Loading workspace...</p>
+      </div>
+    </div>
+  );
 
   return (
     <AppShell
       role="Manager"
-      title="Manager dashboard"
-      subtitle="Review assigned approvals and monitor team expense history."
+      title="Manager Dashboard"
+      subtitle="Review pending approvals from your team and monitor expense history."
       active={active}
       setActive={setActive}
       navItems={navItems}
     >
-      <div className="mb-6 grid gap-4 md:grid-cols-4">
-        <StatCard icon={Clock} label="Pending approvals" value={stats.pending} tone="amber" />
-        <StatCard icon={WalletCards} label={`Pending amount (${company.currency || "USD"})`} value={formatCurrency(stats.total, company.currency || "USD")} tone="teal" />
-        <StatCard icon={Users} label="Team requests" value={stats.team} tone="blue" />
-        <StatCard icon={CheckCircle2} label="Approved team" value={stats.approved} tone="green" />
+      <div className="mb-8 grid gap-5 md:grid-cols-2 lg:grid-cols-4 animate-slide-up" style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
+        <StatCard icon={Clock} label="Pending Approvals" value={stats.pending} tone="amber" />
+        <StatCard icon={WalletCards} label={`Pending Amount (${company.currency || "USD"})`} value={formatCurrency(stats.total, company.currency || "USD")} tone="teal" />
+        <StatCard icon={Users} label="Team Requests" value={stats.team} tone="blue" />
+        <StatCard icon={CheckCircle2} label="Approved Team" value={stats.approved} tone="green" />
       </div>
 
-      {active === "approvals" ? (
-        <Card>
-          <div className="flex flex-col gap-3 border-b border-slate-200 p-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h2 className="font-bold text-slate-950">Approval inbox</h2>
-              <p className="text-sm text-slate-500">Only expenses currently assigned to you appear here.</p>
+      <div className="animate-slide-up" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
+        {active === "approvals" ? (
+          <Card className="overflow-hidden">
+            <div className="flex flex-col gap-4 border-b border-slate-100 bg-slate-50/50 p-6 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Approval Inbox</h2>
+                <p className="mt-1 text-sm text-slate-500">Expenses currently waiting for your review.</p>
+              </div>
+              <div className="relative w-full md:max-w-md">
+                <Search className="pointer-events-none absolute left-4 top-3 h-4 w-4 text-slate-400" />
+                <input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search expense, employee, or category..."
+                  className="w-full rounded-xl border border-slate-200/80 bg-white/80 py-2.5 pl-11 pr-4 text-sm text-slate-900 shadow-sm backdrop-blur-sm outline-none transition-all duration-300 placeholder:text-slate-400 hover:border-slate-300 focus:border-teal-500 focus:bg-white focus:ring-4 focus:ring-teal-500/10"
+                />
+              </div>
             </div>
-            <div className="relative w-full md:max-w-sm">
-              <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search expense, employee, category"
-                className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-10 pr-3 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
-              />
+            <div className="p-6">
+              {loading ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                  <div className="h-8 w-8 rounded-full border-4 border-teal-500/20 border-t-teal-500 animate-spin"></div>
+                  <p className="text-sm font-medium text-slate-500 animate-pulse">Loading inbox...</p>
+                </div>
+              ) : null}
+              {!loading && !filteredApprovals.length ? <EmptyState title="Inbox Zero" description="You're all caught up! No expenses waiting for your approval right now." /> : null}
+              <div className="space-y-4">
+                {filteredApprovals.map((expense, idx) => (
+                  <div key={expense._id} className="animate-fade-in" style={{ animationDelay: `${idx * 50}ms`, animationFillMode: 'both' }}>
+                    <ApprovalCard expense={expense} onView={setSelected} onAction={setActionExpense} />
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="p-4">
-            {loading ? <p className="text-sm text-slate-500">Loading approvals...</p> : null}
-            {!loading && !filteredApprovals.length ? <EmptyState title="No approvals waiting" description="When an expense reaches your step, it will appear here." /> : null}
-            <div className="space-y-3">
-              {filteredApprovals.map((expense) => (
-                <ApprovalCard key={expense._id} expense={expense} onView={setSelected} onAction={setActionExpense} />
-              ))}
-            </div>
-          </div>
-        </Card>
-      ) : (
-        <TeamHistory expenses={teamExpenses} loading={loading} />
-      )}
+          </Card>
+        ) : (
+          <TeamHistory expenses={teamExpenses} loading={loading} />
+        )}
+      </div>
 
       {selected ? <ExpenseDetail expense={selected} onClose={() => setSelected(null)} /> : null}
       {actionExpense ? (
@@ -140,33 +156,46 @@ export default function ManagerDashboard() {
 
 function ApprovalCard({ expense, onView, onAction }) {
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-bold text-slate-950">{expense.description}</h3>
+    <article className="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-all duration-300 hover:border-teal-300 hover:shadow-md">
+      <div className="absolute left-0 top-0 h-full w-1 bg-amber-400"></div>
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between ml-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-3">
+            <h3 className="text-lg font-bold text-slate-900 group-hover:text-teal-700 transition-colors">{expense.description}</h3>
             <StatusBadge status={expense.status} />
-            <Badge tone="blue">{expense.category}</Badge>
+            <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
+              {expense.category}
+            </span>
           </div>
-          <div className="mt-3 grid gap-3 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-4">
-            <span>{expense.employeeId?.name || "Employee"}</span>
-            <span>{formatDate(expense.date)}</span>
-            <span>{formatCurrency(expense.amount, expense.currency)}</span>
-            <span className="font-semibold text-slate-900">{formatCurrency(expense.convertedAmount, expense.convertedCurrency)}</span>
+          <div className="mt-4 flex flex-wrap items-center gap-6 text-sm text-slate-500">
+            <div className="flex items-center gap-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-slate-600 font-bold text-[10px]">
+                {expense.employeeId?.name?.charAt(0) || "E"}
+              </div>
+              <span className="font-medium text-slate-700">{expense.employeeId?.name || "Employee"}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-4 w-4 text-slate-400" />
+              <span>{formatDate(expense.date)}</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="line-through opacity-70">{formatCurrency(expense.amount, expense.currency)}</span>
+              <span className="font-extrabold text-slate-900 text-base bg-emerald-50 px-2 py-0.5 rounded text-emerald-700">{formatCurrency(expense.convertedAmount, expense.convertedCurrency)}</span>
+            </div>
           </div>
         </div>
-        <div className="flex shrink-0 flex-wrap gap-2">
-          <Button variant="secondary" onClick={() => onView(expense)}>
+        <div className="flex shrink-0 flex-wrap items-center gap-3 border-t border-slate-100 pt-4 lg:border-t-0 lg:pt-0">
+          <Button variant="ghost" onClick={() => onView(expense)} className="!px-3 text-slate-500 hover:text-slate-900 bg-slate-50">
             <Eye className="h-4 w-4" />
-            Details
+            Review
           </Button>
-          <Button variant="success" onClick={() => onAction({ expense, action: "Approved" })}>
-            <Check className="h-4 w-4" />
-            Approve
-          </Button>
-          <Button variant="danger" onClick={() => onAction({ expense, action: "Rejected" })}>
+          <Button variant="danger" onClick={() => onAction({ expense, action: "Rejected" })} className="!px-3">
             <X className="h-4 w-4" />
             Reject
+          </Button>
+          <Button variant="success" onClick={() => onAction({ expense, action: "Approved" })} className="!px-5">
+            <Check className="h-4 w-4" />
+            Approve
           </Button>
         </div>
       </div>
@@ -176,73 +205,104 @@ function ApprovalCard({ expense, onView, onAction }) {
 
 function TeamHistory({ expenses, loading }) {
   return (
-    <Card>
-      <div className="border-b border-slate-200 p-4">
-        <h2 className="font-bold text-slate-950">Team expense history</h2>
-        <p className="text-sm text-slate-500">Recent requests from employees assigned to you.</p>
+    <Card className="overflow-hidden">
+      <div className="border-b border-slate-100 bg-slate-50/50 p-6">
+        <h2 className="text-lg font-bold text-slate-900">Team Expense History</h2>
+        <p className="mt-1 text-sm text-slate-500">A complete log of requests from your assigned team members.</p>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+      <div className="overflow-x-auto p-2">
+        <table className="w-full min-w-[800px] text-left text-sm">
+          <thead className="text-xs uppercase tracking-wider text-slate-400">
             <tr>
-              <th className="px-4 py-3">Expense</th>
-              <th className="px-4 py-3">Employee</th>
-              <th className="px-4 py-3">Date</th>
-              <th className="px-4 py-3">Amount</th>
-              <th className="px-4 py-3">Status</th>
+              <th className="px-5 py-4 font-semibold">Expense</th>
+              <th className="px-5 py-4 font-semibold">Employee</th>
+              <th className="px-5 py-4 font-semibold">Date</th>
+              <th className="px-5 py-4 font-semibold">Amount</th>
+              <th className="px-5 py-4 font-semibold">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {expenses.map((expense) => (
-              <tr key={expense._id} className="hover:bg-slate-50">
-                <td className="px-4 py-3 font-semibold text-slate-900">{expense.description}</td>
-                <td className="px-4 py-3 text-slate-600">{expense.employeeId?.name || "-"}</td>
-                <td className="px-4 py-3 text-slate-600">{formatDate(expense.date)}</td>
-                <td className="px-4 py-3">{formatCurrency(expense.convertedAmount || expense.amount, expense.convertedCurrency || expense.currency)}</td>
-                <td className="px-4 py-3"><StatusBadge status={expense.status} /></td>
+            {expenses.map((expense, idx) => (
+              <tr key={expense._id} className="transition-colors hover:bg-slate-50/50 animate-fade-in" style={{ animationDelay: `${idx * 50}ms`, animationFillMode: 'both' }}>
+                <td className="px-5 py-4">
+                  <p className="font-bold text-slate-900">{expense.description}</p>
+                  <p className="mt-0.5 text-xs text-slate-500">{expense.category}</p>
+                </td>
+                <td className="px-5 py-4 font-medium text-slate-700">{expense.employeeId?.name || "-"}</td>
+                <td className="px-5 py-4 text-slate-500">{formatDate(expense.date)}</td>
+                <td className="px-5 py-4 font-bold text-slate-900">{formatCurrency(expense.convertedAmount || expense.amount, expense.convertedCurrency || expense.currency)}</td>
+                <td className="px-5 py-4"><StatusBadge status={expense.status} /></td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      {!loading && !expenses.length ? <div className="p-4"><EmptyState title="No team history yet" description="Team expenses will appear after employees create requests." /></div> : null}
+      {!loading && !expenses.length ? <div className="p-8"><EmptyState title="No team history yet" description="Team expenses will appear after employees submit requests." /></div> : null}
     </Card>
   );
 }
 
 function ExpenseDetail({ expense, onClose }) {
   return (
-    <Modal title={expense.description} description={`${expense.employeeId?.name || "Employee"} · ${expense.category}`} onClose={onClose}>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Detail label="Original amount" value={formatCurrency(expense.amount, expense.currency)} />
-        <Detail label="Company amount" value={formatCurrency(expense.convertedAmount, expense.convertedCurrency)} />
-        <Detail label="Expense date" value={formatDate(expense.date)} />
-        <Detail label="Paid by" value={expense.paidBy || expense.employeeId?.name || "-"} />
+    <Modal title="Expense Details" description={`${expense.employeeId?.name || "Employee"} · ${expense.category}`} onClose={onClose}>
+      <div className="mb-6 rounded-xl bg-slate-50 p-5 border border-slate-100">
+        <h3 className="text-xl font-bold text-slate-900">{expense.description}</h3>
+        <div className="mt-2 flex items-center gap-3">
+          <StatusBadge status={expense.status} />
+          <span className="text-sm font-medium text-slate-500">{formatDate(expense.date)}</span>
+        </div>
       </div>
-      {expense.remarks ? <p className="mt-4 rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{expense.remarks}</p> : null}
-      <div className="mt-5">
-        <h3 className="mb-3 text-sm font-bold text-slate-900">Approval timeline</h3>
-        <div className="space-y-2">
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Detail label="Requested Amount" value={formatCurrency(expense.amount, expense.currency)} />
+        <Detail label="Company Currency" value={formatCurrency(expense.convertedAmount, expense.convertedCurrency)} highlight />
+        <Detail label="Category" value={expense.category} />
+        <Detail label="Paid By" value={expense.paidBy || expense.employeeId?.name || "-"} />
+      </div>
+
+      {expense.remarks ? (
+        <div className="mt-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Employee Remarks</p>
+          <p className="mt-2 text-sm text-slate-700 leading-relaxed italic">"{expense.remarks}"</p>
+        </div>
+      ) : null}
+
+      <div className="mt-8">
+        <h3 className="mb-4 text-sm font-bold tracking-wide text-slate-900 uppercase">Approval Timeline</h3>
+        <div className="space-y-4">
           {(expense.approvalSteps || []).map((step, index) => (
-            <div key={`${step._id || index}`} className="rounded-lg border border-slate-200 p-3 text-sm">
-              <div className="flex items-center justify-between gap-3">
-                <p className="font-semibold text-slate-900">Step {index + 1}: {step.approverName || step.approverId?.name || "Approver"}</p>
-                <Badge tone={step.status === "Approved" ? "green" : step.status === "Rejected" ? "red" : "amber"}>{step.status}</Badge>
+            <div key={`${step._id || index}`} className="relative pl-6 before:absolute before:left-2 before:top-2 before:bottom-[-24px] before:w-px before:bg-slate-200 last:before:hidden">
+              <div className={`absolute left-0 top-1.5 h-4 w-4 rounded-full border-2 border-white shadow-sm ${step.status === 'Approved' ? 'bg-emerald-500' : step.status === 'Rejected' ? 'bg-red-500' : 'bg-slate-300'}`}></div>
+              <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm transition hover:shadow-md">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-400">Step {index + 1}</p>
+                    <p className="font-bold text-slate-900">{step.approverName || step.approverId?.name || "Approver"}</p>
+                  </div>
+                  <Badge tone={step.status === "Approved" ? "green" : step.status === "Rejected" ? "red" : "amber"}>{step.status}</Badge>
+                </div>
+                {step.comment ? (
+                  <div className="mt-3 rounded-lg bg-slate-50 p-3 text-sm text-slate-600">
+                    <span className="font-semibold text-slate-700">Comment:</span> {step.comment}
+                  </div>
+                ) : null}
               </div>
-              {step.comment ? <p className="mt-2 text-slate-600">{step.comment}</p> : null}
             </div>
           ))}
+          {(!expense.approvalSteps || expense.approvalSteps.length === 0) && (
+            <p className="text-sm text-slate-500 italic">No timeline data available.</p>
+          )}
         </div>
       </div>
     </Modal>
   );
 }
 
-function Detail({ label, value }) {
+function Detail({ label, value, highlight }) {
   return (
-    <div className="rounded-lg border border-slate-200 p-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 font-bold text-slate-950">{value || "-"}</p>
+    <div className={`rounded-xl border p-4 ${highlight ? 'border-teal-200 bg-teal-50/50' : 'border-slate-100 bg-white'}`}>
+      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</p>
+      <p className={`mt-1 font-extrabold ${highlight ? 'text-2xl text-teal-900' : 'text-lg text-slate-900'}`}>{value || "-"}</p>
     </div>
   );
 }
@@ -258,7 +318,7 @@ function ActionModal({ expense, action, onClose, onSaved }) {
         method: "POST",
         body: { action, comment },
       });
-      toast.success(`Expense ${action.toLowerCase()}`);
+      toast.success(`Expense ${action.toLowerCase()} successfully`);
       onSaved();
     } catch (error) {
       toast.error(error.message || "Unable to update expense");
@@ -269,19 +329,32 @@ function ActionModal({ expense, action, onClose, onSaved }) {
 
   return (
     <Modal
-      title={`${action === "Approved" ? "Approve" : "Reject"} expense`}
-      description={expense.description}
+      title={`${action === "Approved" ? "Approve" : "Reject"} Expense`}
+      description={`Reviewing: ${expense.description}`}
       onClose={onClose}
       footer={
         <div className="flex justify-end gap-3">
-          <Button variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button variant={action === "Approved" ? "success" : "danger"} onClick={submit} disabled={saving || comment.length < 2}>
-            {saving ? "Saving..." : action}
+          <Button variant="ghost" onClick={onClose}>Cancel</Button>
+          <Button variant={action === "Approved" ? "success" : "danger"} onClick={submit} disabled={saving || (action === "Rejected" && comment.length < 5)}>
+            {saving ? "Processing..." : `Confirm ${action}`}
           </Button>
         </div>
       }
     >
-      <Textarea label="Comment" rows={4} value={comment} onChange={(event) => setComment(event.target.value)} />
+      <div className="space-y-4">
+        {action === "Rejected" && (
+          <div className="rounded-xl bg-red-50 p-4 border border-red-100">
+            <p className="text-sm text-red-800">You must provide a reason when rejecting an expense so the employee knows what to fix.</p>
+          </div>
+        )}
+        <Textarea 
+          label={`Add a comment ${action === "Rejected" ? "(Required)" : "(Optional)"}`} 
+          rows={4} 
+          value={comment} 
+          onChange={(event) => setComment(event.target.value)} 
+          placeholder={`Why are you ${action.toLowerCase()}ing this?`}
+        />
+      </div>
     </Modal>
   );
 }
