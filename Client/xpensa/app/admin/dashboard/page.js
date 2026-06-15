@@ -232,13 +232,22 @@ function UsersPanel({ users, managers, onCreate, onEdit, onRefresh }) {
                   <Badge tone={user.isActive ? "green" : "red"}>{user.isActive ? "Active" : "Inactive"}</Badge>
                 </td>
                 <td className="px-5 py-4">
-                  <div className="flex justify-end gap-2">
-                    <Button variant="secondary" className="!px-3 !py-2" onClick={() => onEdit(user)}>
+                  <div className="flex justify-end gap-1.5">
+                    <button
+                      onClick={() => onEdit(user)}
+                      className="flex h-9 w-9 items-center justify-center rounded-xl text-emerald-600 transition-all duration-200 hover:bg-emerald-50 active:scale-90"
+                      title="Edit User"
+                    >
                       <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="danger" className="!px-3 !py-2" onClick={() => handleDelete(user)} disabled={!user.isActive}>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(user)}
+                      disabled={!user.isActive}
+                      className="flex h-9 w-9 items-center justify-center rounded-xl text-red-600 transition-all duration-200 hover:bg-red-50 active:scale-90 disabled:opacity-20 disabled:pointer-events-none"
+                      title="Delete User"
+                    >
                       <Trash2 className="h-4 w-4" />
-                    </Button>
+                    </button>
                   </div>
                 </td>
               </tr>

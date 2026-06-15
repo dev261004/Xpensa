@@ -211,12 +211,14 @@ export function AppShell({ role, title, subtitle, active, setActive, navItems, c
       </header>
 
       <div className="mx-auto flex w-full max-w-[100rem] flex-1 overflow-hidden">
-        {/* Static Sidebar */}
-        <aside className="hidden w-[260px] shrink-0 flex-col overflow-y-auto border-r border-slate-200 bg-slate-50/50 px-4 py-6 lg:flex">
-          <div className="mb-3 px-3 text-xs font-semibold tracking-wider text-slate-400 uppercase">
+        {/* Static Premium Sidebar */}
+        <aside className="hidden w-[260px] shrink-0 flex-col bg-white px-4 py-6 shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-slate-200 lg:flex relative z-10">
+          <div className="absolute top-0 right-0 h-64 w-64 -translate-y-1/2 translate-x-1/3 rounded-full bg-teal-500/5 blur-[80px]"></div>
+          
+          <div className="mb-4 px-3 text-xs font-bold tracking-widest text-slate-500 uppercase">
             {role} Workspace
           </div>
-          <nav className="flex flex-1 flex-col gap-1">
+          <nav className="relative z-10 flex flex-1 flex-col gap-1.5">
             {navItems.map((item) => {
               const Icon = item.icon;
               const selected = active === item.key;
@@ -224,23 +226,30 @@ export function AppShell({ role, title, subtitle, active, setActive, navItems, c
                 <button
                   key={item.key}
                   onClick={() => setActive(item.key)}
-                  className={`group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors ${
+                  className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-all duration-300 ${
                     selected 
-                      ? "bg-teal-50 text-teal-700" 
-                      : "text-slate-600 hover:bg-slate-200/50 hover:text-slate-900"
+                      ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md shadow-teal-900/10 translate-x-1" 
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 hover:translate-x-1"
                   }`}
                 >
-                  <Icon className={`h-4 w-4 ${selected ? "text-teal-600" : "text-slate-400 group-hover:text-slate-600"}`} />
+                  <Icon className={`h-5 w-5 transition-transform duration-300 ${selected ? "scale-110" : "group-hover:scale-110 group-hover:text-teal-600"}`} />
                   {item.label}
+                  {selected && <div className="ml-auto h-1.5 w-1.5 rounded-full bg-white animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.8)]"></div>}
                 </button>
               );
             })}
           </nav>
           
-          {/* Simple footer without card design */}
-          <div className="mt-auto border-t border-slate-200/60 pt-4 px-3 text-left">
-            <p className="text-xs font-semibold text-slate-500">Xpensa Enterprise</p>
-            <p className="mt-0.5 text-[10px] text-slate-400">v2.0.0-beta</p>
+          <div className="relative z-10 mt-auto border-t border-slate-100 pt-5 px-3">
+            <div className="flex items-center gap-3 rounded-lg bg-slate-50/80 p-3 ring-1 ring-slate-200">
+              <div className="h-8 w-8 rounded bg-gradient-to-br from-teal-600 to-emerald-600 p-1.5 text-white shadow-inner">
+                <ShieldCheck className="h-full w-full" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-800">Xpensa Enterprise</p>
+                <p className="text-[10px] font-medium text-slate-500">v2.0.0-beta</p>
+              </div>
+            </div>
           </div>
         </aside>
 
