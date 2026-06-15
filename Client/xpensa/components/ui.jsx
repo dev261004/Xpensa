@@ -212,9 +212,9 @@ export function AppShell({ role, title, subtitle, active, setActive, navItems, c
 
       <div className="mx-auto flex w-full max-w-[100rem] flex-1 overflow-hidden">
         {/* Static Premium Sidebar */}
-        <aside className="hidden w-[260px] shrink-0 flex-col bg-white px-4 py-6 shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-slate-200 lg:flex relative z-10">
+        <aside className="hidden w-[260px] shrink-0 flex-col bg-gray-100/80 px-4 py-6 shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-gray-300 lg:flex relative z-10">
           <div className="absolute top-0 right-0 h-64 w-64 -translate-y-1/2 translate-x-1/3 rounded-full bg-teal-500/5 blur-[80px]"></div>
-          
+
           <div className="mb-4 px-3 text-xs font-bold tracking-widest text-slate-500 uppercase">
             {role} Workspace
           </div>
@@ -226,11 +226,10 @@ export function AppShell({ role, title, subtitle, active, setActive, navItems, c
                 <button
                   key={item.key}
                   onClick={() => setActive(item.key)}
-                  className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-all duration-300 ${
-                    selected 
-                      ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md shadow-teal-900/10 translate-x-1" 
+                  className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition-all duration-300 ${selected
+                      ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md shadow-teal-900/10 translate-x-1"
                       : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 hover:translate-x-1"
-                  }`}
+                    }`}
                 >
                   <Icon className={`h-5 w-5 transition-transform duration-300 ${selected ? "scale-110" : "group-hover:scale-110 group-hover:text-teal-600"}`} />
                   {item.label}
@@ -239,16 +238,17 @@ export function AppShell({ role, title, subtitle, active, setActive, navItems, c
               );
             })}
           </nav>
+
           
-          <div className="relative z-10 mt-auto border-t border-slate-100 pt-5 px-3">
-            <div className="flex items-center gap-3 rounded-lg bg-slate-50/80 p-3 ring-1 ring-slate-200">
-              <div className="h-8 w-8 rounded bg-gradient-to-br from-teal-600 to-emerald-600 p-1.5 text-white shadow-inner">
-                <ShieldCheck className="h-full w-full" />
+          <div className="mt-auto border-t border-gray-300 pt-5 px-3">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col">
+                <p className="text-sm font-medium text-slate-900">{user?.name || 'User'}</p>
+                <p className="text-xs text-slate-500">{role}</p>
               </div>
-              <div>
-                <p className="text-xs font-bold text-slate-800">Xpensa Enterprise</p>
-                <p className="text-[10px] font-medium text-slate-500">v2.0.0-beta</p>
-              </div>
+              <button onClick={handleLogout} className="text-red-600 hover:bg-red-50 p-2 rounded-full" title="Logout">
+                <LogOut className="h-5 w-5" />
+              </button>
             </div>
           </div>
         </aside>
