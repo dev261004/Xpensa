@@ -68,7 +68,7 @@ export function Textarea({ label, error, className = "", ...props }) {
 
 export function Card({ children, className = "", hover = false }) {
   return (
-    <section 
+    <section
       className={`glass rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 ${hover ? "hover:-translate-y-1 hover:shadow-[0_14px_40px_rgb(0,0,0,0.08)]" : ""} ${className}`}
     >
       {children}
@@ -85,7 +85,7 @@ export function StatCard({ icon: Icon, label, value, tone = "slate" }) {
     red: "from-red-500/20 to-red-50 text-red-700 icon-red",
     blue: "from-blue-500/20 to-blue-50 text-blue-700 icon-blue",
   };
-  
+
   const iconColors = {
     slate: "bg-slate-100 text-slate-600 group-hover:bg-slate-200 group-hover:text-slate-700",
     teal: "bg-teal-100 text-teal-600 group-hover:bg-teal-200 group-hover:text-teal-700",
@@ -102,7 +102,7 @@ export function StatCard({ icon: Icon, label, value, tone = "slate" }) {
   return (
     <Card hover className="group relative overflow-hidden p-5 before:absolute before:inset-0 before:bg-gradient-to-br before:opacity-50 before:-z-10 before:transition-opacity hover:before:opacity-100" style={{ backgroundImage: `linear-gradient(to bottom right, var(--tw-gradient-stops))` }}>
       <div className={`absolute top-0 right-0 -mr-8 -mt-8 h-32 w-32 rounded-full bg-gradient-to-bl ${bgGradient} blur-2xl transition-transform duration-500 group-hover:scale-150`} />
-      
+
       <div className="relative z-10 flex items-center justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-slate-500/80">{label}</p>
@@ -185,16 +185,15 @@ export function AppShell({ role, title, subtitle, active, setActive, navItems, c
   };
 
   return (
-    <div className="app-surface min-h-screen">
-      <header className="sticky top-0 z-30 glass border-b-0 shadow-sm">
-        <div className="mx-auto flex max-w-[90rem] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+    <div className="app-surface flex h-screen flex-col overflow-hidden bg-slate-50">
+      <header className="z-30 shrink-0 border-b border-slate-200 bg-white shadow-sm">
+        <div className="mx-auto flex w-full max-w-[100rem] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
           <Link href="/" className="group flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 text-teal-400 shadow-lg transition-transform duration-300 group-hover:scale-105 group-hover:rotate-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-600 text-white shadow-sm transition-colors group-hover:bg-teal-700">
               <RoleIcon className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-base font-extrabold tracking-tight text-slate-900">Xpensa</p>
-              <p className="text-xs font-semibold tracking-wide text-teal-600 uppercase">{role} workspace</p>
+              <p className="text-base font-bold tracking-tight text-slate-900">Xpensa</p>
             </div>
           </Link>
           <div className="hidden items-center gap-4 sm:flex">
@@ -211,13 +210,13 @@ export function AppShell({ role, title, subtitle, active, setActive, navItems, c
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-[90rem] gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[260px_1fr] lg:px-8">
-        <aside className="glass-dark flex flex-col rounded-2xl p-3 shadow-xl">
-          <div className="mb-4 flex items-center gap-2 px-3 py-2 text-sm font-bold tracking-wide text-slate-400 uppercase lg:hidden">
-            <Menu className="h-4 w-4" />
-            Navigation
+      <div className="mx-auto flex w-full max-w-[100rem] flex-1 overflow-hidden">
+        {/* Static Sidebar */}
+        <aside className="hidden w-[260px] shrink-0 flex-col overflow-y-auto border-r border-slate-200 bg-slate-50/50 px-4 py-6 lg:flex">
+          <div className="mb-3 px-3 text-xs font-semibold tracking-wider text-slate-400 uppercase">
+            {role} Workspace
           </div>
-          <nav className="grid gap-1.5 flex-1">
+          <nav className="flex flex-1 flex-col gap-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const selected = active === item.key;
@@ -225,30 +224,31 @@ export function AppShell({ role, title, subtitle, active, setActive, navItems, c
                 <button
                   key={item.key}
                   onClick={() => setActive(item.key)}
-                  className={`group flex items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-semibold transition-all duration-300 ${
+                  className={`group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors ${
                     selected 
-                      ? "bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow-md shadow-teal-900/20 translate-x-1" 
-                      : "text-slate-300 hover:bg-white/10 hover:text-white hover:translate-x-1"
+                      ? "bg-teal-50 text-teal-700" 
+                      : "text-slate-600 hover:bg-slate-200/50 hover:text-slate-900"
                   }`}
                 >
-                  <Icon className={`h-5 w-5 transition-transform duration-300 ${selected ? "scale-110" : "group-hover:scale-110"}`} />
+                  <Icon className={`h-4 w-4 ${selected ? "text-teal-600" : "text-slate-400 group-hover:text-slate-600"}`} />
                   {item.label}
-                  {selected && <div className="ml-auto h-1.5 w-1.5 rounded-full bg-white animate-pulse"></div>}
                 </button>
               );
             })}
           </nav>
           
-          <div className="mt-6 rounded-xl bg-white/5 p-4 text-center">
-            <p className="text-xs font-medium text-slate-400">Xpensa Enterprise</p>
-            <p className="mt-1 text-[10px] text-slate-500">v2.0.0-beta</p>
+          {/* Simple footer without card design */}
+          <div className="mt-auto border-t border-slate-200/60 pt-4 px-3 text-left">
+            <p className="text-xs font-semibold text-slate-500">Xpensa Enterprise</p>
+            <p className="mt-0.5 text-[10px] text-slate-400">v2.0.0-beta</p>
           </div>
         </aside>
 
-        <main className="min-w-0">
-          <div className="mb-8 animate-slide-up">
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">{title}</h1>
-            <p className="mt-2 text-base font-medium text-slate-600">{subtitle}</p>
+        {/* Scrollable Main Content */}
+        <main className="min-w-0 flex-1 overflow-y-auto px-4 py-8 sm:px-6 lg:px-10 lg:py-8">
+          <div className="mb-8 border-b border-slate-200 pb-5">
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">{title}</h1>
+            <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
           </div>
           <div className="animate-fade-in" style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
             {children}
