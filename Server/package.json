@@ -6,7 +6,8 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest run",
-    "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js"
+    "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js",
+    "seed:demo": "node src/scripts/seedDemoData.js"
   },
   "repository": {
     "type": "git",

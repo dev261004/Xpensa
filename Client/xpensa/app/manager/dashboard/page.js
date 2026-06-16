@@ -263,7 +263,7 @@ function ExpenseDetail({ expense, onClose }) {
       {expense.remarks ? (
         <div className="mt-5 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Employee Remarks</p>
-          <p className="mt-2 text-sm text-slate-700 leading-relaxed italic">"{expense.remarks}"</p>
+          <p className="mt-2 text-sm text-slate-700 leading-relaxed italic">&quot;{expense.remarks}&quot;</p>
         </div>
       ) : null}
 

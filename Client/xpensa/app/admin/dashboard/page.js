@@ -2,7 +2,21 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, ClipboardList, Pencil, Plus, RefreshCw, Settings2, Trash2, Users } from "lucide-react";
+import {
+  BarChart3,
+  CheckCircle2,
+  ClipboardList,
+  Layers3,
+  Pencil,
+  PieChart,
+  Plus,
+  RefreshCw,
+  Settings2,
+  TrendingUp,
+  Trash2,
+  Users,
+  WalletCards,
+} from "lucide-react";
 import { apiFetch } from "../../../lib/api";
 import { useRequireRole } from "../../../lib/hooks";
 import { formatCurrency, formatDate } from "../../../lib/format";
@@ -25,7 +39,7 @@ const initialUserForm = { name: "", email: "", role: "Employee", managerId: "" }
 
 export default function AdminDashboard() {
   const { ready } = useRequireRole("Admin");
-  const [active, setActive] = useState("users");
+  const [active, setActive] = useState("overview");
   const [users, setUsers] = useState([]);
   const [managers, setManagers] = useState([]);
   const [expenses, setExpenses] = useState([]);
@@ -36,6 +50,7 @@ export default function AdminDashboard() {
   const [overrideExpense, setOverrideExpense] = useState(null);
 
   const navItems = [
+    { key: "overview", label: "Overview", icon: BarChart3 },
     { key: "users", label: "Users", icon: Users },
     { key: "rules", label: "Approval rules", icon: Settings2 },
     { key: "expenses", label: "All expenses", icon: ClipboardList },
@@ -71,6 +86,10 @@ export default function AdminDashboard() {
       managers: users.filter((user) => user.role === "Manager" && user.isActive).length,
       pending: expenses.filter((expense) => expense.status === "Waiting approval").length,
       approved: expenses.filter((expense) => expense.status === "Approved").length,
+      spend: expenses
+        .filter((expense) => expense.status === "Approved")
+        .reduce((sum, expense) => sum + expenseAmount(expense), 0),
+      currency: companyCurrency(expenses),
     }),
     [expenses, users]
   );
@@ -90,11 +109,12 @@ export default function AdminDashboard() {
         <StatCard icon={Users} label="Active Employees" value={stats.employees} tone="blue" />
         <StatCard icon={Users} label="Active Managers" value={stats.managers} tone="teal" />
         <StatCard icon={RefreshCw} label="Pending Approvals" value={stats.pending} tone="amber" />
-        <StatCard icon={CheckCircle2} label="Approved Expenses" value={stats.approved} tone="green" />
+        <StatCard icon={WalletCards} label="Approved Spend" value={formatCurrency(stats.spend, stats.currency)} tone="green" />
       </div>
 
       <div className="animate-slide-up" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
         {loading ? <LoadingPanel /> : null}
+        {!loading && active === "overview" ? <OverviewPanel expenses={expenses} /> : null}
         {!loading && active === "users" ? (
           <UsersPanel
             users={users}
@@ -153,6 +173,353 @@ function normalizeRule(rule) {
       required: Boolean(item.required),
     })),
   };
+}
+
+function expenseAmount(expense) {
+  return Number(expense.convertedAmount || expense.amount || 0);
+}
+
+function companyCurrency(expenses) {
+  return expenses.find((expense) => expense.convertedCurrency)?.convertedCurrency || expenses[0]?.currency || "USD";
+}
+
+function employeeName(expense) {
+  return expense.employeeId?.name || expense.employee?.name || "Unassigned";
+}
+
+function monthLabel(dateValue) {
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return "Unknown";
+  return date.toLocaleDateString(undefined, { month: "short", year: "2-digit" });
+}
+
+function buildAnalytics(expenses) {
+  const currency = companyCurrency(expenses);
+  const approvedExpenses = expenses.filter((expense) => expense.status === "Approved");
+  const spendBase = approvedExpenses.length ? approvedExpenses : expenses;
+
+  const statusConfig = [
+    { key: "Approved", label: "Approved", color: "#10b981", tone: "green" },
+    { key: "Waiting approval", label: "Waiting", color: "#f59e0b", tone: "amber" },
+    { key: "Rejected", label: "Rejected", color: "#ef4444", tone: "red" },
+    { key: "Draft", label: "Draft", color: "#64748b", tone: "slate" },
+  ];
+
+  const statusData = statusConfig.map((item) => {
+    const items = expenses.filter((expense) => expense.status === item.key);
+    return {
+      ...item,
+      count: items.length,
+      amount: items.reduce((sum, expense) => sum + expenseAmount(expense), 0),
+    };
+  });
+
+  const categoryMap = new Map();
+  spendBase.forEach((expense) => {
+    const key = expense.category || "Other";
+    const current = categoryMap.get(key) || { category: key, amount: 0, count: 0 };
+    categoryMap.set(key, {
+      ...current,
+      amount: current.amount + expenseAmount(expense),
+      count: current.count + 1,
+    });
+  });
+
+  const monthlyMap = new Map();
+  expenses.forEach((expense) => {
+    const key = monthLabel(expense.date || expense.createdAt);
+    const current = monthlyMap.get(key) || { month: key, amount: 0, count: 0 };
+    monthlyMap.set(key, {
+      ...current,
+      amount: current.amount + expenseAmount(expense),
+      count: current.count + 1,
+    });
+  });
+
+  const employeeMap = new Map();
+  spendBase.forEach((expense) => {
+    const key = employeeName(expense);
+    const current = employeeMap.get(key) || { name: key, amount: 0, count: 0 };
+    employeeMap.set(key, {
+      ...current,
+      amount: current.amount + expenseAmount(expense),
+      count: current.count + 1,
+    });
+  });
+
+  return {
+    currency,
+    totalSubmitted: expenses.reduce((sum, expense) => sum + expenseAmount(expense), 0),
+    approvedSpend: approvedExpenses.reduce((sum, expense) => sum + expenseAmount(expense), 0),
+    pendingSpend: expenses
+      .filter((expense) => expense.status === "Waiting approval")
+      .reduce((sum, expense) => sum + expenseAmount(expense), 0),
+    rejectedSpend: expenses.filter((expense) => expense.status === "Rejected").reduce((sum, expense) => sum + expenseAmount(expense), 0),
+    statusData,
+    categoryData: [...categoryMap.values()].sort((a, b) => b.amount - a.amount).slice(0, 6),
+    monthlyData: [...monthlyMap.values()].slice(-6),
+    topEmployees: [...employeeMap.values()].sort((a, b) => b.amount - a.amount).slice(0, 5),
+    spendBaseLabel: approvedExpenses.length ? "approved spend" : "submitted spend",
+  };
+}
+
+function formatCompactAmount(amount, currency) {
+  const value = Number(amount || 0);
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      notation: "compact",
+      maximumFractionDigits: 1,
+    }).format(value);
+  } catch {
+    return `${value.toFixed(0)} ${currency}`;
+  }
+}
+
+function OverviewPanel({ expenses }) {
+  const analytics = useMemo(() => buildAnalytics(expenses), [expenses]);
+
+  return (
+    <div className="space-y-6">
+      <section className="overflow-hidden rounded-2xl border border-slate-900 bg-slate-950 text-white shadow-[0_24px_70px_rgba(15,23,42,0.24)]">
+        <div className="grid gap-6 p-6 lg:grid-cols-[1fr_360px]">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-teal-300/30 bg-teal-300/10 px-3 py-1 text-xs font-bold text-teal-100">
+              <BarChart3 className="h-3.5 w-3.5" />
+              Company expense intelligence
+            </div>
+            <h2 className="mt-4 max-w-2xl text-3xl font-black tracking-normal">
+              Spend visibility for approvals, categories, and team behavior.
+            </h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
+              Monitor how much the company has submitted, approved, rejected, and where expenses are concentrated.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <HeroMetric label="Submitted" value={formatCurrency(analytics.totalSubmitted, analytics.currency)} />
+            <HeroMetric label="Approved" value={formatCurrency(analytics.approvedSpend, analytics.currency)} />
+            <HeroMetric label="Pending" value={formatCurrency(analytics.pendingSpend, analytics.currency)} />
+            <HeroMetric label="Rejected" value={formatCurrency(analytics.rejectedSpend, analytics.currency)} />
+          </div>
+        </div>
+      </section>
+
+      <div className="grid gap-5 lg:grid-cols-[420px_1fr]">
+        <Card className="p-6">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-black text-slate-950">Expense Status</h3>
+              <p className="text-sm text-slate-500">Approved, rejected, waiting, and draft requests.</p>
+            </div>
+            <PieChart className="h-5 w-5 text-teal-700" />
+          </div>
+          <StatusDonut data={analytics.statusData} />
+        </Card>
+
+        <Card className="p-6">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-black text-slate-950">Category-wise Spend</h3>
+              <p className="text-sm text-slate-500">Based on {analytics.spendBaseLabel}.</p>
+            </div>
+            <Layers3 className="h-5 w-5 text-blue-700" />
+          </div>
+          <CategoryBars data={analytics.categoryData} currency={analytics.currency} />
+        </Card>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
+        <Card className="p-6">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-black text-slate-950">Monthly Spend Trend</h3>
+              <p className="text-sm text-slate-500">Submitted expense amount across recent months.</p>
+            </div>
+            <TrendingUp className="h-5 w-5 text-emerald-700" />
+          </div>
+          <TrendChart data={analytics.monthlyData} currency={analytics.currency} />
+        </Card>
+
+        <Card className="p-6">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-black text-slate-950">Top Employees</h3>
+              <p className="text-sm text-slate-500">Highest {analytics.spendBaseLabel} contributors.</p>
+            </div>
+            <Users className="h-5 w-5 text-indigo-700" />
+          </div>
+          <TopEmployees employees={analytics.topEmployees} currency={analytics.currency} />
+        </Card>
+      </div>
+
+      {!expenses.length ? (
+        <EmptyState
+          title="No expense analytics yet"
+          description="Charts will populate automatically when employees start submitting expenses."
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function HeroMetric({ label, value }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/10 p-4">
+      <p className="text-xs font-bold uppercase tracking-wide text-slate-300">{label}</p>
+      <p className="mt-2 break-words text-xl font-black text-white">{value}</p>
+    </div>
+  );
+}
+
+function StatusDonut({ data }) {
+  const total = data.reduce((sum, item) => sum + item.count, 0);
+  let cursor = 0;
+  const gradient = total
+    ? `conic-gradient(${data
+        .filter((item) => item.count > 0)
+        .map((item) => {
+          const start = cursor;
+          const end = cursor + (item.count / total) * 100;
+          cursor = end;
+          return `${item.color} ${start}% ${end}%`;
+        })
+        .join(", ")})`
+    : "conic-gradient(#e2e8f0 0% 100%)";
+
+  return (
+    <div className="grid gap-6 md:grid-cols-[220px_1fr] md:items-center">
+      <div className="relative mx-auto h-52 w-52 rounded-full shadow-inner" style={{ background: gradient }}>
+        <div className="absolute inset-8 flex flex-col items-center justify-center rounded-full bg-white text-center shadow-sm">
+          <p className="text-3xl font-black text-slate-950">{total}</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Expenses</p>
+        </div>
+      </div>
+      <div className="space-y-3">
+        {data.map((item) => (
+          <div key={item.key} className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+            <div className="flex items-center gap-3">
+              <span className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
+              <div>
+                <p className="font-bold text-slate-900">{item.label}</p>
+                <p className="text-xs text-slate-500">{item.count} request{item.count === 1 ? "" : "s"}</p>
+              </div>
+            </div>
+            <Badge tone={item.tone}>{item.count}</Badge>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CategoryBars({ data, currency }) {
+  const max = Math.max(...data.map((item) => item.amount), 1);
+
+  if (!data.length) {
+    return <EmptyState title="No category spend yet" description="Category data appears after expenses are created." />;
+  }
+
+  return (
+    <div className="space-y-4">
+      {data.map((item, index) => {
+        const width = Math.max((item.amount / max) * 100, 8);
+        return (
+          <div key={item.category}>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <div>
+                <p className="font-bold text-slate-900">{item.category}</p>
+                <p className="text-xs text-slate-500">{item.count} expense{item.count === 1 ? "" : "s"}</p>
+              </div>
+              <p className="text-sm font-black text-slate-950">{formatCurrency(item.amount, currency)}</p>
+            </div>
+            <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-teal-500 to-blue-500 transition-all"
+                style={{ width: `${width}%`, opacity: 1 - index * 0.08 }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function TrendChart({ data, currency }) {
+  const max = Math.max(...data.map((item) => item.amount), 1);
+  const points = data
+    .map((item, index) => {
+      const x = data.length === 1 ? 50 : (index / (data.length - 1)) * 100;
+      const y = 90 - (item.amount / max) * 70;
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  if (!data.length) {
+    return <EmptyState title="No monthly trend yet" description="Trend data appears after expenses are created." />;
+  }
+
+  return (
+    <div>
+      <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+        <svg viewBox="0 0 100 100" className="h-64 w-full overflow-visible">
+          <defs>
+            <linearGradient id="adminTrend" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0%" stopColor="#14b8a6" />
+              <stop offset="100%" stopColor="#2563eb" />
+            </linearGradient>
+          </defs>
+          <polyline points={points} fill="none" stroke="url(#adminTrend)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+          {data.map((item, index) => {
+            const x = data.length === 1 ? 50 : (index / (data.length - 1)) * 100;
+            const y = 90 - (item.amount / max) * 70;
+            return <circle key={item.month} cx={x} cy={y} r="3.5" fill="#0f172a" stroke="#ffffff" strokeWidth="2" />;
+          })}
+        </svg>
+      </div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
+        {data.map((item) => (
+          <div key={item.month} className="rounded-xl border border-slate-100 bg-white px-3 py-2">
+            <p className="text-xs font-bold text-slate-500">{item.month}</p>
+            <p className="mt-1 text-sm font-black text-slate-950">{formatCompactAmount(item.amount, currency)}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TopEmployees({ employees, currency }) {
+  const max = Math.max(...employees.map((item) => item.amount), 1);
+
+  if (!employees.length) {
+    return <EmptyState title="No employee spend yet" description="Employee rankings appear after expenses are submitted." />;
+  }
+
+  return (
+    <div className="space-y-3">
+      {employees.map((employee, index) => (
+        <div key={employee.name} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-950 text-sm font-black text-teal-300">
+                {index + 1}
+              </div>
+              <div>
+                <p className="font-bold text-slate-900">{employee.name}</p>
+                <p className="text-xs text-slate-500">{employee.count} expense{employee.count === 1 ? "" : "s"}</p>
+              </div>
+            </div>
+            <p className="text-sm font-black text-slate-950">{formatCompactAmount(employee.amount, currency)}</p>
+          </div>
+          <div className="h-2 overflow-hidden rounded-full bg-white">
+            <div className="h-full rounded-full bg-teal-500" style={{ width: `${Math.max((employee.amount / max) * 100, 8)}%` }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function LoadingScreen() {

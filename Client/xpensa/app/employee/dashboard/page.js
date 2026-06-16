@@ -193,7 +193,7 @@ function ExpenseRow({ expense, onSubmit }) {
           </div>
           {expense.remarks ? (
             <div className="mt-4 border-l-2 border-slate-300 pl-3">
-              <p className="text-sm italic text-slate-500">"{expense.remarks}"</p>
+              <p className="text-sm italic text-slate-500">&quot;{expense.remarks}&quot;</p>
             </div>
           ) : null}
           <ApprovalTimeline steps={expense.approvalSteps || []} />
