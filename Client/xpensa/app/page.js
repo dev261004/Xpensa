@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, FileCheck2, Gauge, ReceiptText, ShieldCheck, Users, WalletCards } from "lucide-react";
+import Navbar from "../components/Navbar";
 
 export const metadata = {
   title: "Xpensa",
@@ -15,7 +16,8 @@ export default function Home() {
 
   return (
     <main className="bg-slate-100 text-slate-950">
-      <section className="hero-product-surface relative min-h-[88vh] overflow-hidden px-4 py-10 text-white sm:px-6 lg:px-8">
+      <Navbar />
+      <section className="hero-product-surface relative min-h-[88vh] overflow-hidden px-4 pt-24 pb-10 text-white sm:px-6 lg:px-8">
         <div className="absolute inset-x-0 bottom-0 top-20 mx-auto hidden max-w-7xl opacity-70 lg:block">
           <div className="absolute right-0 top-6 w-[620px] rounded-lg border border-white/15 bg-white/10 p-4 shadow-2xl backdrop-blur">
             <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
