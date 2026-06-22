@@ -27,9 +27,9 @@ export default function Home() {
             </div>
             <div className="space-y-3">
               {[
-                ["Client dinner", "Sarah", "₹8,420", "Waiting"],
-                ["Airport transfer", "Mohan", "₹2,140", "Step 2"],
-                ["Design tools", "Aditi", "₹14,999", "CFO"],
+                ["Client dinner", "Sarah", "INR 8,420", "Waiting"],
+                ["Airport transfer", "Mohan", "INR 2,140", "Step 2"],
+                ["Design tools", "Aditi", "INR 14,999", "CFO"],
               ].map(([name, owner, amount, status]) => (
                 <div key={name} className="grid grid-cols-[1fr_100px_90px_82px] items-center gap-3 rounded-lg border border-white/10 bg-white/90 px-3 py-3 text-sm text-slate-950">
                   <span className="font-bold">{name}</span>
@@ -43,7 +43,7 @@ export default function Home() {
           <div className="absolute bottom-16 right-28 grid w-[420px] grid-cols-2 gap-4">
             <div className="rounded-lg border border-white/15 bg-white/90 p-4 text-slate-950 shadow-xl">
               <WalletCards className="h-5 w-5 text-teal-700" />
-              <p className="mt-4 text-2xl font-black">₹2.4L</p>
+              <p className="mt-4 text-2xl font-black">INR 2.4L</p>
               <p className="text-xs font-semibold text-slate-500">approved this month</p>
             </div>
             <div className="rounded-lg border border-white/15 bg-white/90 p-4 text-slate-950 shadow-xl">
@@ -83,7 +83,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="-mt-12 px-4 pb-14 sm:px-6 lg:px-8">
+      <section className="relative z-10 -mt-12 px-4 pb-14 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-4 md:grid-cols-3">
           {features.map((feature) => {
             const Icon = feature.icon;

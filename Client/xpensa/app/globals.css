@@ -84,6 +84,25 @@ table {
     linear-gradient(135deg, #020617 0%, #0f172a 100%);
 }
 
+.hero-product-surface {
+  background:
+    linear-gradient(90deg, rgba(2, 6, 23, 0.98) 0%, rgba(15, 23, 42, 0.92) 44%, rgba(15, 23, 42, 0.72) 100%),
+    radial-gradient(circle at 18% 28%, rgba(20, 184, 166, 0.28) 0%, transparent 34%),
+    radial-gradient(circle at 76% 24%, rgba(59, 130, 246, 0.2) 0%, transparent 32%),
+    radial-gradient(circle at 80% 78%, rgba(16, 185, 129, 0.18) 0%, transparent 34%),
+    linear-gradient(135deg, #020617 0%, #0f172a 58%, #134e4a 100%);
+}
+
+.hero-product-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(2, 6, 23, 0.28), transparent 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 42%);
+}
+
 /* Hide scrollbars for clean UI */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
