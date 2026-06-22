@@ -67,11 +67,10 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="relative">
-              <Mail className="pointer-events-none absolute left-3 top-10 h-4 w-4 text-slate-400" />
               <Input label="Email" type="email" className="pl-10" error={errors.email?.message} {...register("email")} />
+              <Mail className="pointer-events-none absolute left-3 top-10 z-10 h-4 w-4 text-slate-400" />
             </div>
             <div className="relative">
-              <Lock className="pointer-events-none absolute left-3 top-10 h-4 w-4 text-slate-400" />
               <Input
                 label="Password"
                 type={showPassword ? "text" : "password"}
@@ -79,12 +78,13 @@ export default function LoginPage() {
                 error={errors.password?.message}
                 {...register("password")}
               />
+              <Lock className="pointer-events-none absolute left-3 top-10 z-10 h-4 w-4 text-slate-400" />
               <button
                 type="button"
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 title={showPassword ? "Hide password" : "Show password"}
                 onClick={() => setShowPassword((value) => !value)}
-                className="absolute right-3 top-10 rounded-md p-0.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                className="absolute right-3 top-10 z-10 rounded-md p-0.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>

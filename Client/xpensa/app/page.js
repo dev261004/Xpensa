@@ -17,9 +17,9 @@ export default function Home() {
   return (
     <main className="bg-slate-100 text-slate-950">
       <Navbar />
-      <section className="hero-product-surface relative min-h-[88vh] overflow-hidden px-4 pt-24 pb-10 text-white sm:px-6 lg:px-8">
+      <section className="hero-product-surface relative min-h-[65vh] overflow-hidden px-4 pt-24 pb-24 text-white sm:px-6 lg:px-8">
         <div className="absolute inset-x-0 bottom-0 top-20 mx-auto hidden max-w-7xl opacity-70 lg:block">
-          <div className="absolute right-0 top-6 w-[620px] rounded-lg border border-white/15 bg-white/10 p-4 shadow-2xl backdrop-blur">
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-[620px] rounded-lg border border-white/15 bg-white/10 p-4 shadow-2xl backdrop-blur">
             <div className="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
               <div>
                 <p className="text-sm font-bold">Manager approval inbox</p>
@@ -42,21 +42,9 @@ export default function Home() {
               ))}
             </div>
           </div>
-          <div className="absolute bottom-16 right-28 grid w-[420px] grid-cols-2 gap-4">
-            <div className="rounded-lg border border-white/15 bg-white/90 p-4 text-slate-950 shadow-xl">
-              <WalletCards className="h-5 w-5 text-teal-700" />
-              <p className="mt-4 text-2xl font-black">INR 2.4L</p>
-              <p className="text-xs font-semibold text-slate-500">approved this month</p>
-            </div>
-            <div className="rounded-lg border border-white/15 bg-white/90 p-4 text-slate-950 shadow-xl">
-              <Users className="h-5 w-5 text-blue-700" />
-              <p className="mt-4 text-2xl font-black">18</p>
-              <p className="text-xs font-semibold text-slate-500">active approvers</p>
-            </div>
-          </div>
         </div>
 
-        <div className="relative z-10 mx-auto flex min-h-[72vh] max-w-7xl items-center">
+        <div className="relative z-10 mx-auto flex min-h-[50vh] max-w-7xl items-center">
           <div className="max-w-2xl">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-teal-300/30 bg-teal-300/10 px-3 py-1 text-sm font-semibold text-teal-100">
               <CheckCircle2 className="h-4 w-4" />
@@ -85,7 +73,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="relative z-10 -mt-12 px-4 pb-14 sm:px-6 lg:px-8">
+      <section className="relative z-10 -mt-8 px-4 pb-14 sm:px-6 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-4 md:grid-cols-3">
           {features.map((feature) => {
             const Icon = feature.icon;
