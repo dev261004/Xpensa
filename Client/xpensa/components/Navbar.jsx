@@ -38,11 +38,11 @@ export default function Navbar() {
             <Link href="#" className="text-sm font-bold text-slate-600 hover:text-teal-600 transition-colors">
               Pricing
             </Link>
-            <Link href="#" className="text-sm font-bold text-slate-600 hover:text-teal-600 transition-colors">
-              Customers
+            <Link href="/contact" className="text-sm font-bold text-slate-600 hover:text-teal-600 transition-colors">
+              Contact
             </Link>
-            <Link href="#" className="text-sm font-bold text-slate-600 hover:text-teal-600 transition-colors">
-              Company
+            <Link href="/about" className="text-sm font-bold text-slate-600 hover:text-teal-600 transition-colors">
+              About Us
             </Link>
           </div>
 
