@@ -1,14 +1,26 @@
+"use client";
+
 import Link from 'next/link';
 import { ArrowRight, Menu } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { getStoredUser, routeForRole } from '../lib/auth';
 
 export default function Navbar() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    setUser(getStoredUser());
+  }, []);
+
+  const dashboardLink = user ? routeForRole(user.role) : "/";
+
   return (
     <nav className="fixed top-0 inset-x-0 z-50 bg-white/70 backdrop-blur-lg border-b border-white/20 shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center gap-2">
-            <Link href="/" className="flex items-center gap-2 group">
+            <Link href={dashboardLink} className="flex items-center gap-2 group">
               <div className="w-8 h-8 rounded-xl bg-teal-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-teal-500/30 transition-transform group-hover:scale-105 group-hover:-rotate-3">
                 X
               </div>
@@ -36,19 +48,31 @@ export default function Navbar() {
 
           {/* Right side CTAs */}
           <div className="hidden md:flex items-center gap-4">
-            <Link 
-              href="/admin/login" 
-              className="text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors px-3 py-2"
-            >
-              Log in
-            </Link>
-            <Link 
-              href="/admin/register" 
-              className="inline-flex items-center gap-1.5 rounded-lg bg-teal-500 px-4 py-2 text-sm font-bold text-slate-50 shadow-lg shadow-teal-500/30 transition-all hover:bg-teal-400 hover:-translate-y-0.5 hover:shadow-teal-500/40"
-            >
-              Get Started
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            {user ? (
+              <Link 
+                href={dashboardLink} 
+                className="inline-flex items-center gap-1.5 rounded-lg bg-teal-500 px-4 py-2 text-sm font-bold text-slate-50 shadow-lg shadow-teal-500/30 transition-all hover:bg-teal-400 hover:-translate-y-0.5 hover:shadow-teal-500/40"
+              >
+                Go to Dashboard
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            ) : (
+              <>
+                <Link 
+                  href="/admin/login" 
+                  className="text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors px-3 py-2"
+                >
+                  Log in
+                </Link>
+                <Link 
+                  href="/admin/register" 
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-teal-500 px-4 py-2 text-sm font-bold text-slate-50 shadow-lg shadow-teal-500/30 transition-all hover:bg-teal-400 hover:-translate-y-0.5 hover:shadow-teal-500/40"
+                >
+                  Get Started
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile menu button */}

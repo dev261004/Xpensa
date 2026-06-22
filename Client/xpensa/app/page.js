@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, FileCheck2, Gauge, ReceiptText, ShieldCheck, Users, WalletCards } from "lucide-react";
 import Navbar from "../components/Navbar";
+import HeroCTA from "../components/HeroCTA";
 
 export const metadata = {
   title: "Xpensa",
@@ -54,21 +55,7 @@ export default function Home() {
             <p className="mt-5 max-w-xl text-lg leading-8 text-slate-200">
               Submit receipts, route approvals, convert currencies, and keep every reimbursement decision audit-ready.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/admin/register"
-                className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-teal-400 px-5 py-3 text-sm font-black text-slate-950 shadow-lg shadow-teal-950/30 transition hover:bg-teal-300"
-              >
-                Create company
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/admin/login"
-                className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-white/25 bg-white/10 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/15"
-              >
-                Sign in
-              </Link>
-            </div>
+            <HeroCTA />
           </div>
         </div>
       </section>

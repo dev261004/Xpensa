@@ -104,11 +104,11 @@ export function StatCard({ icon: Icon, label, value, tone = "slate" }) {
       <div className={`absolute top-0 right-0 -mr-8 -mt-8 h-32 w-32 rounded-full bg-gradient-to-bl ${bgGradient} blur-2xl transition-transform duration-500 group-hover:scale-150`} />
 
       <div className="relative z-10 flex items-center justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-slate-500/80">{label}</p>
-          <p className="mt-1.5 text-3xl font-extrabold tracking-tight text-slate-900 drop-shadow-sm">{value}</p>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-slate-500/80 truncate" title={label}>{label}</p>
+          <p className="mt-1.5 text-2xl font-extrabold tracking-tight text-slate-900 drop-shadow-sm truncate" title={value}>{value}</p>
         </div>
-        <div className={`rounded-2xl p-3 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-sm ${iconColors[iconTone]}`}>
+        <div className={`shrink-0 rounded-2xl p-3 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 shadow-sm ${iconColors[iconTone]}`}>
           <Icon className="h-6 w-6" />
         </div>
       </div>
@@ -188,13 +188,13 @@ export function AppShell({ role, title, subtitle, active, setActive, navItems, c
     <div className="app-surface flex h-screen flex-col overflow-hidden bg-slate-50">
       <header className="z-30 shrink-0 border-b border-slate-200 bg-white shadow-sm">
         <div className="mx-auto flex w-full max-w-[100rem] items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
-          <Link href="/" className="group flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-600 text-white shadow-sm transition-colors group-hover:bg-teal-700">
-              <RoleIcon className="h-5 w-5" />
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="w-8 h-8 rounded-xl bg-teal-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-teal-500/30 transition-transform group-hover:scale-105 group-hover:-rotate-3">
+              X
             </div>
-            <div>
-              <p className="text-base font-bold tracking-tight text-slate-900">Xpensa</p>
-            </div>
+            <span className="text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700">
+              Xpensa
+            </span>
           </Link>
           <div className="hidden items-center gap-4 sm:flex">
             <div className="text-right">
@@ -242,11 +242,16 @@ export function AppShell({ role, title, subtitle, active, setActive, navItems, c
           
           <div className="mt-auto border-t border-gray-300 pt-5 px-3">
             <div className="flex items-center justify-between">
-              <div className="flex flex-col">
-                <p className="text-sm font-medium text-slate-900">{user?.name || 'User'}</p>
-                <p className="text-xs text-slate-500">{role}</p>
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-700 font-bold text-lg">
+                  {(user?.name || 'U').charAt(0).toUpperCase()}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <p className="text-sm font-bold text-slate-900 truncate">{user?.name || 'User'}</p>
+                  <p className="text-xs font-medium text-slate-500 truncate">{role}</p>
+                </div>
               </div>
-              <button onClick={handleLogout} className="text-red-600 hover:bg-red-50 p-2 rounded-full" title="Logout">
+              <button onClick={handleLogout} className="text-slate-400 hover:text-red-600 hover:bg-red-50 p-2 rounded-xl transition-colors" title="Logout">
                 <LogOut className="h-5 w-5" />
               </button>
             </div>
@@ -255,10 +260,12 @@ export function AppShell({ role, title, subtitle, active, setActive, navItems, c
 
         {/* Scrollable Main Content */}
         <main className="min-w-0 flex-1 overflow-y-auto px-4 py-8 sm:px-6 lg:px-10 lg:py-8">
-          <div className="mb-8 border-b border-slate-200 pb-5">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">{title}</h1>
-            <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
-          </div>
+          {(title || subtitle) && (
+            <div className="mb-8 border-b border-slate-200 pb-5">
+              {title && <h1 className="text-2xl font-bold tracking-tight text-slate-900">{title}</h1>}
+              {subtitle && <p className="mt-1 text-sm text-slate-500">{subtitle}</p>}
+            </div>
+          )}
           <div className="animate-fade-in" style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
             {children}
           </div>

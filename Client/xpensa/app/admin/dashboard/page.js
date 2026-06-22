@@ -12,6 +12,7 @@ import {
   Plus,
   RefreshCw,
   Settings2,
+  HelpCircle,
   TrendingUp,
   Trash2,
   Users,
@@ -99,18 +100,20 @@ export default function AdminDashboard() {
   return (
     <AppShell
       role="Admin"
-      title="Admin Dashboard"
-      subtitle="Manage users, approval rules, and oversee company expenses with ease."
+      title={["overview", "rules"].includes(active) ? null : "Admin Dashboard"}
+      subtitle={["overview", "rules"].includes(active) ? null : "Manage users, approval rules, and oversee company expenses with ease."}
       active={active}
       setActive={setActive}
       navItems={navItems}
     >
-      <div className="mb-8 grid gap-5 md:grid-cols-2 lg:grid-cols-4 animate-slide-up" style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
-        <StatCard icon={Users} label="Active Employees" value={stats.employees} tone="blue" />
-        <StatCard icon={Users} label="Active Managers" value={stats.managers} tone="teal" />
-        <StatCard icon={RefreshCw} label="Pending Approvals" value={stats.pending} tone="amber" />
-        <StatCard icon={WalletCards} label="Approved Spend" value={formatCurrency(stats.spend, stats.currency)} tone="green" />
-      </div>
+      {!["overview", "rules"].includes(active) && (
+        <div className="mb-8 grid gap-5 md:grid-cols-2 lg:grid-cols-4 animate-slide-up" style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
+          <StatCard icon={Users} label="Active Employees" value={stats.employees} tone="blue" />
+          <StatCard icon={Users} label="Active Managers" value={stats.managers} tone="teal" />
+          <StatCard icon={RefreshCw} label="Pending Approvals" value={stats.pending} tone="amber" />
+          <StatCard icon={WalletCards} label="Approved Spend" value={formatCurrency(stats.spend, stats.currency)} tone="green" />
+        </div>
+      )}
 
       <div className="animate-slide-up" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
         {loading ? <LoadingPanel /> : null}
@@ -697,6 +700,7 @@ function UserModal({ user, managers, onClose, onSaved }) {
 
 function RulePanel({ rule, setRule, managers, onSaved }) {
   const [saving, setSaving] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   const updateApprover = (index, patch) => {
     setRule({
@@ -740,7 +744,13 @@ function RulePanel({ rule, setRule, managers, onSaved }) {
           <h2 className="text-lg font-bold text-slate-900">Approval Workflow Builder</h2>
           <p className="mt-1 text-sm text-slate-500">Configure how expenses are routed for approval across the company.</p>
         </div>
-        <Button onClick={save} disabled={saving}>{saving ? "Saving configuration..." : "Save Rule Configuration"}</Button>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" onClick={() => setGuideOpen(true)} className="text-slate-600 hover:text-teal-700">
+            <HelpCircle className="h-4 w-4" />
+            Setup Guide
+          </Button>
+          <Button onClick={save} disabled={saving}>{saving ? "Saving configuration..." : "Save Rule Configuration"}</Button>
+        </div>
       </div>
 
       <div className="p-6 space-y-8">
@@ -804,9 +814,17 @@ function RulePanel({ rule, setRule, managers, onSaved }) {
                 <Input label="Step" type="number" value={index + 1} readOnly className="font-bold text-center bg-slate-50" />
                 <Select label="Approver" value={approver.userId} onChange={(event) => updateApprover(index, { userId: event.target.value })}>
                   <option value="">Select approver</option>
-                  {managers.map((manager) => (
-                    <option key={manager._id} value={manager._id}>{manager.name}</option>
-                  ))}
+                  {managers.map((manager) => {
+                    const isSelectedElsewhere = rule.approvers.some(
+                      (a, aIndex) => aIndex !== index && a.userId === manager._id
+                    );
+                    if (isSelectedElsewhere) return null;
+                    return (
+                      <option key={manager._id} value={manager._id}>
+                        {manager.name}
+                      </option>
+                    );
+                  })}
                 </Select>
                 <label className="flex h-11 items-center gap-3 cursor-pointer rounded-lg border border-slate-200 px-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
                   <input type="checkbox" className="accent-teal-600 h-4 w-4" checked={approver.required} onChange={(event) => updateApprover(index, { required: event.target.checked })} />
@@ -826,6 +844,38 @@ function RulePanel({ rule, setRule, managers, onSaved }) {
           </div>
         </div>
       </div>
+
+      {guideOpen ? (
+        <Modal
+          title="How Approval Rules Work"
+          description="Learn how to configure expense routing for your company."
+          onClose={() => setGuideOpen(false)}
+          footer={
+            <div className="flex justify-end">
+              <Button onClick={() => setGuideOpen(false)}>Got it</Button>
+            </div>
+          }
+        >
+          <div className="space-y-4 text-sm text-slate-700">
+            <div>
+              <h4 className="font-bold text-slate-900">1. Manager First</h4>
+              <p>When enabled, all expenses are routed to the employee's direct manager first, before following any other routing rules.</p>
+            </div>
+            <div>
+              <h4 className="font-bold text-slate-900">2. Routing Type</h4>
+              <ul className="mt-2 list-disc pl-5 space-y-1">
+                <li><strong>Percentage based:</strong> Requires a set percentage of the sequential approvers to approve the expense.</li>
+                <li><strong>Specific Approver:</strong> All expenses are routed to a single, specifically designated manager, ignoring the sequential chain.</li>
+                <li><strong>Hybrid Approach:</strong> A combination where both manager logic and sequential approvers are evaluated.</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-bold text-slate-900">3. Sequential Chain</h4>
+              <p>Build a list of mandatory approvers. If an expense is routed through the sequential chain, these managers must approve it in the specified order.</p>
+            </div>
+          </div>
+        </Modal>
+      ) : null}
     </Card>
   );
 }
